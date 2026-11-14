@@ -108,6 +108,48 @@ main {
   background: rgba(255, 77, 148, .05);
 }
 
+.modos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modos .dropzone { padding: 44px 16px; text-align: center; }
+.dropzone .formatos { color: var(--fraco); font-size: 12px; margin-top: 8px; }
+.grupo.sem-linha { border-bottom: 0; padding-bottom: 0; }
+@media (max-width: 640px) { .modos { grid-template-columns: 1fr; } }
+
+/* ===== Momentos (modo vídeo longo) ===== */
+.momentos {
+  margin-top: 12px;
+  background: var(--campo);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+.momentos-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+  border-bottom: 1px solid var(--borda);
+}
+.momentos-topo .rotulo { margin-right: 4px; }
+.momentos ol { list-style: none; margin: 0; padding: 4px; max-height: 220px; overflow-y: auto; }
+.momentos ol:empty { display: none; }
+.momentos li { display: flex; align-items: center; gap: 10px; padding: 2px 8px; border-radius: 6px; }
+.momentos li:hover { background: var(--elevado); }
+.momentos li.ativo { background: var(--hover); box-shadow: inset 2px 0 0 var(--rosa); }
+.momentos .faixa {
+  height: 28px;
+  padding: 0 6px;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  border-color: transparent;
+}
+.momentos .duracao { color: var(--fraco); font-family: var(--mono); font-size: 11px; width: 32px; }
+.momentos .forca { flex: 1; height: 4px; border-radius: 2px; background: var(--borda); overflow: hidden; }
+.momentos .forca > div { height: 100%; background: linear-gradient(90deg, var(--rosa), var(--laranja)); }
+.momentos .dica { margin: 0; padding: 12px; }
+.check { display: inline-flex; align-items: center; gap: 6px; color: var(--suave); cursor: pointer; }
+input[type="checkbox"] { accent-color: var(--rosa); width: 14px; height: 14px; margin: 0; cursor: pointer; }
+
 /* ===== Player + moldura de enquadramento ===== */
 .palco { display: flex; justify-content: center; }
 .video-wrap {

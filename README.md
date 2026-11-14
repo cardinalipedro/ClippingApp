@@ -4,9 +4,12 @@ Editor de clipes verticais (TikTok, Shorts, Reels) que roda **100% no navegador*
 O vídeo nunca sai do computador do usuário: o processamento é feito pelo
 [FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm), uma versão do FFmpeg compilada para WebAssembly.
 
-## Funcionalidades (v0.2)
+## Funcionalidades (v0.3)
 
-- Upload por arrastar e soltar ou por clique
+- **Dois modos de entrada:**
+  - *Clipe curto*: o vídeo abre já com a legenda sendo gerada
+  - *Vídeo longo*: o app analisa o áudio, sugere os momentos mais agitados e gera todos os clipes em fila, já legendados
+- Vídeos longos são lidos direto do disco (WORKERFS), sem copiar o arquivo pra memória
 - Marcação de início e fim (botões ou atalhos **I** / **O**, prévia com **P**)
 - 3 formatos de saída:
   - **Vertical 9:16**: recorte com posição ajustável e prévia do enquadramento
@@ -39,7 +42,7 @@ Abra o endereço que aparecer no terminal (normalmente http://localhost:5173).
 
 - A legenda baixa um modelo de IA na primeira vez (dezenas de MB) e pode errar nomes próprios e gírias: sempre revise.
 - O formato "Original" não recodifica o vídeo, então sai sem legenda.
-- Vídeos muito grandes (> ~1,5 GB) podem estourar a memória do navegador.
+- A detecção de momentos olha só o volume do som: acha gritos, risadas e explosões, mas não entende o que foi dito.
 - Recodificar é mais lento que num programa nativo (o FFmpeg.wasm usa uma thread só).
 - O formato "Original" corta no keyframe mais próximo, então pode variar 1 a 2 s.
 
@@ -48,8 +51,8 @@ Abra o endereço que aparecer no terminal (normalmente http://localhost:5173).
 - [x] Legenda automática (pt, en, es)
 - [ ] Estilos de legenda (cor, posição, tamanho)
 - [ ] Layout dividido (momento em cima, zoom ou reação embaixo)
-- [ ] Fila para exportar vários trechos de uma vez
-- [ ] Detecção automática de momentos pelos picos de áudio
+- [x] Detecção de momentos pelos picos de áudio + exportação em fila
+- [ ] IA lendo a transcrição pra escolher momentos e sugerir títulos (precisa de backend)
 - [ ] Backend opcional para processar no servidor
 
 ## Deploy

@@ -18,11 +18,30 @@
     <main>
       <!-- ETAPA 1: escolher o vídeo -->
       <section id="etapaUpload" class="card">
-        <label for="arquivo" class="dropzone" id="dropzone">
-          <strong>Arraste um vídeo aqui</strong>
-          <span>ou clique para escolher (mp4, mov, mkv, webm)</span>
-          <input type="file" id="arquivo" accept="video/*,.mkv,.mov" hidden />
-        </label>
+        <div class="modos">
+          <label class="dropzone" data-modo="curto">
+            <strong>Clipe curto</strong>
+            <span>Já tem o trecho pronto? A legenda é gerada sozinha.</span>
+            <span class="formatos">Arraste ou clique · até 3 min</span>
+            <input type="file" accept="video/*,.mkv,.mov" hidden />
+          </label>
+          <label class="dropzone" data-modo="longo">
+            <strong>Vídeo longo</strong>
+            <span>O app acha os melhores momentos, corta e legenda cada um.</span>
+            <span class="formatos">Arraste ou clique · 10 min ou mais</span>
+            <input type="file" accept="video/*,.mkv,.mov" hidden />
+          </label>
+        </div>
+        <div class="grupo sem-linha">
+          <label class="rotulo" for="idiomaInicial">Idioma falado</label>
+          <div class="conteudo">
+            <select id="idiomaInicial">
+              <option value="portuguese">Português</option>
+              <option value="english">English</option>
+              <option value="spanish">Español</option>
+            </select>
+          </div>
+        </div>
       </section>
 
       <!-- ETAPA 2: editar -->
@@ -35,6 +54,29 @@
             <!-- Prévia da legenda por cima do player -->
             <div class="legenda-previa" id="legendaPrevia" hidden></div>
           </div>
+        </div>
+
+        <!-- Só aparece no modo "vídeo longo" -->
+        <div class="momentos" id="painelMomentos" hidden>
+          <div class="momentos-topo">
+            <span class="rotulo">Momentos</span>
+            <select id="duracaoClipe" title="Duração de cada clipe">
+              <option value="20">Clipes de 20 s</option>
+              <option value="30" selected>Clipes de 30 s</option>
+              <option value="45">Clipes de 45 s</option>
+              <option value="60">Clipes de 60 s</option>
+            </select>
+            <select id="quantidadeClipes" title="Quantidade máxima de clipes">
+              <option value="3">Até 3</option>
+              <option value="5" selected>Até 5</option>
+              <option value="8">Até 8</option>
+              <option value="10">Até 10</option>
+            </select>
+            <label class="check empurra"><input type="checkbox" id="legendarLote" checked /> Legendar</label>
+            <button id="btnLote" class="primario" type="button">Gerar clipes</button>
+          </div>
+          <ol id="listaMomentos"></ol>
+          <p class="dica" id="dicaMomentos">Os momentos aparecem aqui depois da análise do áudio.</p>
         </div>
 
         <div class="controles">
