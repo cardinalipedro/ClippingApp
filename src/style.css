@@ -130,6 +130,31 @@ main {
   border-bottom: 1px solid var(--borda);
 }
 .momentos-topo .rotulo { margin-right: 4px; }
+.linha-chave {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--borda);
+  color: var(--suave);
+}
+.linha-chave input {
+  flex: 1;
+  min-width: 180px;
+  height: 28px;
+  padding: 0 8px;
+  font: inherit;
+  font-family: var(--mono);
+  color: var(--texto);
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  outline: 0;
+}
+.linha-chave input:focus { border-color: var(--rosa); box-shadow: 0 0 0 3px var(--foco); }
+.linha-chave a { color: var(--suave); }
+.linha-chave a:hover { color: var(--texto); }
 .momentos ol { list-style: none; margin: 0; padding: 4px; max-height: 220px; overflow-y: auto; }
 .momentos ol:empty { display: none; }
 .momentos li { display: flex; align-items: center; gap: 10px; padding: 2px 8px; border-radius: 6px; }
@@ -144,7 +169,8 @@ main {
   border-color: transparent;
 }
 .momentos .duracao { color: var(--fraco); font-family: var(--mono); font-size: 11px; width: 32px; }
-.momentos .forca { flex: 1; height: 4px; border-radius: 2px; background: var(--borda); overflow: hidden; }
+.momentos .titulo { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.momentos .forca { flex: none; width: 96px; height: 4px; border-radius: 2px; background: var(--borda); overflow: hidden; }
 .momentos .forca > div { height: 100%; background: linear-gradient(90deg, var(--rosa), var(--laranja)); }
 .momentos .dica { margin: 0; padding: 12px; }
 .check { display: inline-flex; align-items: center; gap: 6px; color: var(--suave); cursor: pointer; }

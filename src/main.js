@@ -7,7 +7,8 @@
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
-import { encontrarMomentos } from './momentos.js';
+import { encontrarMomentos, criarAjustador } from './momentos.js';
+import { encontrarMomentosComIA } from './ia.js';
 import { agruparEmBlocos, aplicarTextoAoBloco, gerarASS, textoDoBloco } from './legenda.js';
 import urlFonteLegenda from './fontes/Inter-ExtraBold.otf?url'; // o Vite troca isso pela URL do arquivo
 
@@ -16,6 +17,8 @@ const CORE_URL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
 const DURACAO_PADRAO = 30;            // segundos sugeridos ao abrir um vídeo
 const LIMITE_COPIA_BYTES = 1.5e9;     // acima disso não dá pra copiar o vídeo pra memória
 const LIMITE_LEGENDA_AUTO = 180;      // modo "clipe curto": legenda sozinho vídeos de até 3 min
+const LIMITE_AUDIO_IA_BYTES = 14e6;    // o Gemini aceita pedidos de até 20 MB (o áudio cresce 1/3 ao ser enviado)
+const CHAVE_GUARDADA = 'clipador.chaveGemini'; // nome usado no localStorage
 const TAXA_ANALISE = 8000;            // qualidade do áudio usado pra achar momentos (baixa = rápido)
 
 // ---------- Atalho para pegar elementos do HTML ----------
@@ -58,6 +61,9 @@ const el = {
   btnLote: $('btnLote'),
   listaMomentos: $('listaMomentos'),
   dicaMomentos: $('dicaMomentos'),
+  metodoMomentos: $('metodoMomentos'),
+  linhaChave: $('linhaChave'),
+  chaveGemini: $('chaveGemini'),
 };
 
 // ---------- Estado da aplicação (a "memória" do app) ----------
@@ -78,6 +84,7 @@ const estado = {
   modo: 'curto',           // 'curto' (legendar um clipe) ou 'longo' (achar momentos e cortar)
   entradaMontada: false,   // o vídeo está "montado" no FFmpeg (lido direto do disco)?
   audioAnalise: null,      // áudio do vídeo inteiro em baixa qualidade (modo longo)
+  audioIA: null,           // o mesmo áudio, comprimido e em base64, pra mandar pro Gemini
   momentos: [],            // [{ inicio, fim, forca, marcado }] sugeridos no modo longo
   momentoAtivo: null,      // índice do momento que está aberto no editor
   emLote: false,           // true enquanto "Gerar clipes" processa a fila
@@ -155,6 +162,7 @@ function abrirArquivo(arquivo, modo) {
   estado.modo = modo;
   removerLegenda(); // legenda e momentos do vídeo anterior não valem pro novo
   estado.audioAnalise = null;
+  estado.audioIA = null;
   estado.momentos = [];
   estado.momentoAtivo = null;
   desenharMomentos();
@@ -499,6 +507,7 @@ function definirOcupado(ocupado) {
   el.btnLote.disabled = ocupado;
   el.duracaoClipe.disabled = ocupado;
   el.quantidadeClipes.disabled = ocupado;
+  el.metodoMomentos.disabled = ocupado;
   el.btnExportar.textContent = ocupado ? 'Aguarde…' : 'Exportar clipe';
 }
 
@@ -698,16 +707,37 @@ async function analisarMomentos() {
       estado.audioAnalise = new Int16Array(bytes.buffer.slice(bytes.byteOffset, fim));
     }
 
-    estado.momentoAtivo = null;
-    estado.momentos = encontrarMomentos(estado.audioAnalise, TAXA_ANALISE, {
+    const opcoes = {
       duracaoClipe: Number(el.duracaoClipe.value),
       quantidade: Number(el.quantidadeClipes.value),
-    }).map((m) => ({ ...m, marcado: true }));
+    };
+
+    // Com IA: o Gemini escolhe pelo conteúdo. Se não der, cai pro método do som.
+    let momentos = null;
+    let aviso = '';
+    if (el.metodoMomentos.value === 'ia') {
+      const chave = el.chaveGemini.value.trim();
+      if (!chave) {
+        aviso = 'Cole sua chave do Gemini pra usar a IA. Por enquanto, sugeri pelo som.';
+      } else {
+        try {
+          momentos = await momentosPorIA(chave, opcoes);
+          if (!momentos.length) aviso = 'A IA não achou bons momentos. Sugeri pelo som.';
+        } catch (erro) {
+          console.error(erro);
+          aviso = `A IA falhou (${erro.message}). Sugeri pelo som.`;
+        }
+      }
+    }
+    if (!momentos || !momentos.length) momentos = encontrarMomentos(estado.audioAnalise, TAXA_ANALISE, opcoes);
+
+    estado.momentoAtivo = null;
+    estado.momentos = momentos.map((m) => ({ ...m, marcado: true }));
     desenharMomentos();
 
     if (estado.momentos.length) {
       selecionarMomento(0);
-      mostrarStatus(`Encontrei ${estado.momentos.length} momentos. Confira e clique em Gerar clipes.`, 1);
+      mostrarStatus(aviso || `Encontrei ${estado.momentos.length} momentos. Confira e clique em Gerar clipes.`, 1);
     } else {
       mostrarStatus('Não achei momentos que se destaquem pelo som. Marque os trechos na mão.', 0);
     }
@@ -719,6 +749,67 @@ async function analisarMomentos() {
     definirOcupado(false);
   }
 }
+
+/** Comprime o áudio, manda pro Gemini e dá acabamento nos tempos que ele devolver. */
+async function momentosPorIA(chave, opcoes) {
+  if (!estado.audioIA) {
+    mostrarStatus('Preparando o áudio pra IA…', 0);
+    estado.duracaoExportando = el.video.duration;
+    // Voz em baixa qualidade: 1 hora de vídeo vira ~11 MB
+    const codigo = await ffmpeg.exec([
+      '-i', estado.nomeEntrada, '-vn', '-ac', '1', '-ar', '16000',
+      '-c:a', 'aac', '-b:a', '24k', '-f', 'adts', 'ia.aac',
+    ]);
+    if (codigo !== 0) throw new Error('não consegui comprimir o áudio');
+    const bytes = await ffmpeg.readFile('ia.aac');
+    await ffmpeg.deleteFile('ia.aac');
+    if (bytes.byteLength > LIMITE_AUDIO_IA_BYTES) throw new Error('vídeo longo demais pra IA, o limite é perto de 1h15');
+    estado.audioIA = await paraBase64(bytes);
+  }
+
+  mostrarStatus('A IA está ouvindo o vídeo e escolhendo os momentos…', 0.5);
+  const momentos = await encontrarMomentosComIA({
+    chave,
+    audioBase64: estado.audioIA,
+    duracaoTotal: el.video.duration,
+    idioma: el.idioma.value,
+    ...opcoes,
+  });
+  // A IA erra o tempo por 1 ou 2 segundos: encosta as pontas no silêncio mais próximo
+  const ajustar = criarAjustador(estado.audioAnalise, TAXA_ANALISE);
+  return momentos.map((m) => ({ ...m, ...ajustar(m.inicio, m.fim) }));
+}
+
+/** Bytes → texto base64 (o formato em que arquivos viajam dentro de um JSON). */
+function paraBase64(bytes) {
+  return new Promise((resolver, rejeitar) => {
+    const leitor = new FileReader();
+    leitor.onload = () => resolver(String(leitor.result).split(',')[1]);
+    leitor.onerror = () => rejeitar(new Error('não consegui preparar o áudio'));
+    leitor.readAsDataURL(new Blob([bytes]));
+  });
+}
+
+// A chave fica guardada só neste navegador (localStorage). Ela nunca entra no código.
+function lerChaveGuardada() {
+  try { return localStorage.getItem(CHAVE_GUARDADA) || ''; } catch { return ''; }
+}
+el.chaveGemini.value = lerChaveGuardada();
+el.metodoMomentos.value = el.chaveGemini.value ? 'ia' : 'som';
+el.linhaChave.hidden = el.metodoMomentos.value !== 'ia';
+
+el.chaveGemini.addEventListener('change', () => {
+  const chave = el.chaveGemini.value.trim();
+  try {
+    if (chave) localStorage.setItem(CHAVE_GUARDADA, chave);
+    else localStorage.removeItem(CHAVE_GUARDADA);
+  } catch { /* navegador sem localStorage: a chave vale só até fechar a aba */ }
+  if (chave) analisarMomentos();
+});
+el.metodoMomentos.addEventListener('change', () => {
+  el.linhaChave.hidden = el.metodoMomentos.value !== 'ia';
+  analisarMomentos();
+});
 
 /** Abre um momento no editor: o trecho passa a ser o dele. */
 function selecionarMomento(indice) {
@@ -761,11 +852,16 @@ function desenharMomentos() {
 
     const forca = document.createElement('div');
     forca.className = 'forca';
-    forca.title = 'Quanto o som se destaca do resto do vídeo';
+    forca.title = momento.titulo ? 'Nota que a IA deu pro momento' : 'Quanto o som se destaca do resto do vídeo';
     forca.innerHTML = '<div></div>';
     forca.firstChild.style.width = `${Math.round(momento.forca * 100)}%`;
 
-    li.append(marca, faixa, duracao, forca);
+    const titulo = document.createElement('span');
+    titulo.className = 'titulo';
+    titulo.textContent = momento.titulo || '';   // só os momentos da IA têm título
+    titulo.title = momento.motivo || '';
+
+    li.append(marca, faixa, duracao, titulo, forca);
     el.listaMomentos.append(li);
   });
   atualizarBotaoLote();

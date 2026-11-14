@@ -38,7 +38,7 @@ function mediana(valores) {
 
 /** Índice do quadro mais silencioso entre `de` e `ate` (inclusive). */
 function quadroMaisSilencioso(volume, de, ate) {
-  let melhor = Math.max(0, de);
+  let melhor = Math.min(Math.max(0, de), volume.length - 1);
   for (let q = melhor; q <= Math.min(ate, volume.length - 1); q++) {
     if (volume[q] < volume[melhor]) melhor = q;
   }
@@ -105,4 +105,25 @@ export function encontrarMomentos(amostras, taxa, { duracaoClipe = 30, quantidad
         forca: p / melhorPontuacao,
       };
     });
+}
+
+/**
+ * Devolve uma função que empurra início e fim de um trecho pro silêncio mais
+ * próximo (até 1,5 s de folga). Usada pra dar acabamento nos momentos da IA.
+ */
+export function criarAjustador(amostras, taxa) {
+  const volume = medirVolume(amostras, taxa);
+  const total = volume.length * QUADRO;
+  const folga = Math.round(1.5 / QUADRO);
+  return (inicio, fim) => {
+    if (volume.length < 4) return { inicio, fim };
+    const qInicio = Math.round(inicio / QUADRO);
+    const qFim = Math.round(fim / QUADRO);
+    const a = quadroMaisSilencioso(volume, qInicio - folga, qInicio + folga);
+    const b = quadroMaisSilencioso(volume, qFim - folga, qFim + folga);
+    return {
+      inicio: Math.round(a * QUADRO * 10) / 10,
+      fim: Math.round(Math.min(total, (b + 1) * QUADRO) * 10) / 10,
+    };
+  };
 }

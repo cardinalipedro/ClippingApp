@@ -4,11 +4,11 @@ Editor de clipes verticais (TikTok, Shorts, Reels) que roda **100% no navegador*
 O vídeo nunca sai do computador do usuário: o processamento é feito pelo
 [FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm), uma versão do FFmpeg compilada para WebAssembly.
 
-## Funcionalidades (v0.3)
+## Funcionalidades (v0.5)
 
 - **Dois modos de entrada:**
   - *Clipe curto*: o vídeo abre já com a legenda sendo gerada
-  - *Vídeo longo*: o app analisa o áudio, sugere os momentos mais agitados e gera todos os clipes em fila, já legendados
+  - *Vídeo longo*: o app sugere os melhores momentos e gera todos os clipes em fila, já legendados. A escolha pode ser **por IA** (o Gemini ouve o áudio e escolhe pelo conteúdo, com título pra cada clipe) ou **pelo som** (trechos mais agitados, sem internet)
 - Vídeos longos são lidos direto do disco (WORKERFS), sem copiar o arquivo pra memória
 - Marcação de início e fim (botões ou atalhos **I** / **O**, prévia com **P**)
 - 3 formatos de saída:
@@ -16,7 +16,7 @@ O vídeo nunca sai do computador do usuário: o processamento é feito pelo
   - **Vertical com fundo desfocado**: o vídeo inteiro centralizado sobre uma versão borrada dele
   - **Original**: corte instantâneo, sem recodificar
 - Saída em 1080×1920 ou 720×1280 (H.264 + AAC, `faststart`)
-- **Legenda automática** em português, inglês ou espanhol (no idioma falado), com destaque palavra por palavra e texto editável antes de exportar. A fala é reconhecida pelo [Whisper](https://github.com/openai/whisper) rodando no navegador via [Transformers.js](https://huggingface.co/docs/transformers.js)
+- **Legenda automática** em português, inglês ou espanhol (no idioma falado), com destaque palavra por palavra e texto editável antes de exportar. A fala é reconhecida pelo [Whisper](https://github.com/openai/whisper) (versão *small*, para mais precisão) rodando no navegador via [Transformers.js](https://huggingface.co/docs/transformers.js)
 - Lista de clipes exportados com prévia e download
 
 ## Como rodar
@@ -29,6 +29,12 @@ npm run dev
 ```
 
 Abra o endereço que aparecer no terminal (normalmente http://localhost:5173).
+
+## Chave do Gemini (opcional)
+
+O modo por IA usa a API do Gemini com uma chave sua, criada no [Google AI Studio](https://aistudio.google.com/apikey).
+A chave fica salva só no `localStorage` do seu navegador: ela não faz parte do código e não vai pro repositório.
+O áudio do vídeo é enviado ao Google pra análise.
 
 ## Como funciona
 
@@ -52,7 +58,8 @@ Abra o endereço que aparecer no terminal (normalmente http://localhost:5173).
 - [ ] Estilos de legenda (cor, posição, tamanho)
 - [ ] Layout dividido (momento em cima, zoom ou reação embaixo)
 - [x] Detecção de momentos pelos picos de áudio + exportação em fila
-- [ ] IA lendo a transcrição pra escolher momentos e sugerir títulos (precisa de backend)
+- [x] IA (Gemini) escolhendo momentos e sugerindo títulos, com a chave do próprio usuário
+- [ ] Backend pra esconder a chave e abrir o site ao público
 - [ ] Backend opcional para processar no servidor
 
 ## Deploy

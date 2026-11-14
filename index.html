@@ -60,6 +60,10 @@
         <div class="momentos" id="painelMomentos" hidden>
           <div class="momentos-topo">
             <span class="rotulo">Momentos</span>
+            <select id="metodoMomentos" title="Como escolher os momentos">
+              <option value="ia">Por IA (Gemini)</option>
+              <option value="som">Pelo som</option>
+            </select>
             <select id="duracaoClipe" title="Duração de cada clipe">
               <option value="20">Clipes de 20 s</option>
               <option value="30" selected>Clipes de 30 s</option>
@@ -74,6 +78,11 @@
             </select>
             <label class="check empurra"><input type="checkbox" id="legendarLote" checked /> Legendar</label>
             <button id="btnLote" class="primario" type="button">Gerar clipes</button>
+          </div>
+          <div class="linha-chave" id="linhaChave" hidden>
+            <label for="chaveGemini">Chave do Gemini</label>
+            <input type="password" id="chaveGemini" placeholder="Cole aqui a sua chave de API" autocomplete="off" spellcheck="false" />
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Criar chave grátis</a>
           </div>
           <ol id="listaMomentos"></ol>
           <p class="dica" id="dicaMomentos">Os momentos aparecem aqui depois da análise do áudio.</p>

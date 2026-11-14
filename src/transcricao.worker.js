@@ -13,9 +13,9 @@
 import { pipeline } from '@huggingface/transformers';
 import { dividirEmJanelas } from './legenda.js';
 
-// Modelo com tempo por palavra. Pra mais precisão (e mais demora/download),
-// troque "base" por "small".
-const MODELO = 'onnx-community/whisper-base_timestamped';
+// Modelo com tempo por palavra, versão "small" (multilíngue: pt, en, es).
+// Escolhido pra qualidade: é mais lento e tem download maior que o "base".
+const MODELO = 'onnx-community/whisper-small_timestamped';
 const TAXA = 16000;
 
 let transcritor = null; // carregado uma vez e reaproveitado
@@ -26,7 +26,7 @@ async function carregarModelo() {
   const arquivos = new Map(); // nome do arquivo → { baixado, total }
   transcritor = await pipeline('automatic-speech-recognition', MODELO, {
     device: 'wasm', // roda em qualquer PC; o tempo por palavra é mais confiável aqui que em 'webgpu'
-    dtype: 'q8',    // versão compacta do modelo (download menor)
+    dtype: 'fp32', // precisão total: erra menos palavras que a versão quantizada (q8)
     progress_callback: (p) => {
       if (p.status !== 'progress' || !p.total) return;
       arquivos.set(p.file, { baixado: p.loaded, total: p.total });
