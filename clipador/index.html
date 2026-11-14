@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Clipador — cortes verticais no navegador</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
@@ -33,41 +36,60 @@
         </div>
 
         <div class="controles">
-          <div class="linha">
-            <button id="btnInicio" type="button">Marcar início <kbd>I</kbd></button>
-            <button id="btnFim" type="button">Marcar fim <kbd>O</kbd></button>
-            <button id="btnOuvir" type="button">▶ Ver trecho <kbd>P</kbd></button>
+          <div class="grupo">
+            <span class="rotulo">Trecho</span>
+            <div class="conteudo">
+              <div class="campo">
+                <label for="inicio">Início</label>
+                <input type="number" id="inicio" step="0.1" min="0" value="0" />
+                <span class="unidade">s</span>
+                <button id="btnInicio" type="button" title="Usar o ponto atual do vídeo como início">Marcar <kbd>I</kbd></button>
+              </div>
+              <div class="campo">
+                <label for="fim">Fim</label>
+                <input type="number" id="fim" step="0.1" min="0" value="0" />
+                <span class="unidade">s</span>
+                <button id="btnFim" type="button" title="Usar o ponto atual do vídeo como fim">Marcar <kbd>O</kbd></button>
+              </div>
+              <span id="duracao" class="pill">Duração: 0.0s</span>
+              <button id="btnOuvir" class="secundario empurra" type="button">
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" /></svg>
+                Ver trecho <kbd>P</kbd>
+              </button>
+            </div>
           </div>
 
-          <div class="linha tempos">
-            <label>Início (s) <input type="number" id="inicio" step="0.1" min="0" value="0" /></label>
-            <label>Fim (s) <input type="number" id="fim" step="0.1" min="0" value="0" /></label>
-            <span id="duracao" class="pill">Duração: 0.0s</span>
+          <div class="grupo">
+            <span class="rotulo" id="rotuloFormato">Formato</span>
+            <div class="conteudo">
+              <div class="segmentado" role="radiogroup" aria-labelledby="rotuloFormato">
+                <label><input type="radio" name="formato" value="vertical" checked /><span>Vertical 9:16</span></label>
+                <label><input type="radio" name="formato" value="desfocado" /><span>Fundo desfocado</span></label>
+                <label><input type="radio" name="formato" value="original" /><span>Original</span></label>
+              </div>
+            </div>
           </div>
 
-          <fieldset class="linha opcoes">
-            <legend>Formato</legend>
-            <label><input type="radio" name="formato" value="vertical" checked /> Vertical 9:16 (recorte)</label>
-            <label><input type="radio" name="formato" value="desfocado" /> Vertical com fundo desfocado</label>
-            <label><input type="radio" name="formato" value="original" /> Original (rápido, sem recodificar)</label>
-          </fieldset>
-
-          <div class="linha" id="linhaPosicao">
-            <label class="cresce">Posição do enquadramento
+          <div class="grupo" id="linhaPosicao">
+            <label class="rotulo" for="posicao">Enquadramento</label>
+            <div class="conteudo">
+              <span class="extremo">Esq.</span>
               <input type="range" id="posicao" min="0" max="100" value="50" />
-            </label>
+              <span class="extremo">Dir.</span>
+            </div>
           </div>
 
-          <div class="linha" id="linhaResolucao">
-            <label>Resolução
+          <div class="grupo" id="linhaResolucao">
+            <label class="rotulo" for="resolucao">Resolução</label>
+            <div class="conteudo">
               <select id="resolucao">
-                <option value="1080">1080×1920 (melhor qualidade)</option>
-                <option value="720">720×1280 (exporta mais rápido)</option>
+                <option value="1080">1080 × 1920</option>
+                <option value="720">720 × 1280 (exporta mais rápido)</option>
               </select>
-            </label>
+            </div>
           </div>
 
-          <div class="linha">
+          <div class="acoes-finais">
             <button id="btnExportar" class="primario" type="button">Exportar clipe</button>
             <button id="btnTrocar" class="secundario" type="button">Trocar vídeo</button>
           </div>
