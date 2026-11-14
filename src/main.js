@@ -67,6 +67,7 @@ const el = {
   chaveGemini: $('chaveGemini'),
   btnAnalisar: $('btnAnalisar'),
   idiomaMomentos: $('idiomaMomentos'),
+  btnTema: $('btnTema'),
 };
 
 // ---------- Estado da aplicação (a "memória" do app) ----------
@@ -961,7 +962,27 @@ function atualizarTextosDinamicos() {
   definirOcupado(estado.ocupado);            // "Exportar clipe" / "Aguarde…"
   el.btnLegenda.textContent = t(estado.legenda ? 'legenda.denovo' : 'legenda.gerar');
   atualizarDicaLegenda();
+  atualizarBotaoTema();
 }
+
+// ---------- Tema claro / escuro ----------
+// O tema é só um atributo no <html>: data-tema="claro". O CSS faz o resto.
+const TEMA_GUARDADO = 'clipador.tema';
+const temaClaro = () => document.documentElement.dataset.tema === 'claro';
+
+function atualizarBotaoTema() {
+  const rotulo = t(temaClaro() ? 'tema.paraEscuro' : 'tema.paraClaro');
+  el.btnTema.title = rotulo;
+  el.btnTema.setAttribute('aria-label', rotulo);
+}
+
+el.btnTema.addEventListener('click', () => {
+  const novo = temaClaro() ? 'escuro' : 'claro';
+  if (novo === 'claro') document.documentElement.dataset.tema = 'claro';
+  else delete document.documentElement.dataset.tema;
+  try { localStorage.setItem(TEMA_GUARDADO, novo); } catch { /* sem localStorage */ }
+  atualizarBotaoTema();
+});
 
 document.querySelectorAll('input[name="interface"]').forEach((opcao) => {
   opcao.checked = opcao.value === idiomaAtual();

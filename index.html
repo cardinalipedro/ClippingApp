@@ -8,6 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./src/style.css" />
+    <!-- Aplica o tema salvo ANTES de a página aparecer, pra não piscar na cor errada -->
+    <script>
+      try {
+        if (localStorage.getItem('clipador.tema') === 'claro') document.documentElement.dataset.tema = 'claro';
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <!--
@@ -15,13 +21,20 @@
       O texto escrito aqui (em português) é só o que aparece antes do JavaScript carregar.
     -->
     <header class="topo">
-      <!-- Troca o idioma da INTERFACE (não o idioma da legenda) -->
-      <div class="segmentado troca-idioma" role="radiogroup" data-i18n-aria="t.interface">
-        <label><input type="radio" name="interface" value="pt" /><span>PT</span></label>
-        <label><input type="radio" name="interface" value="en" /><span>EN</span></label>
-        <label><input type="radio" name="interface" value="es" /><span>ES</span></label>
+      <div class="topo-acoes">
+        <!-- Troca o idioma da INTERFACE (não o idioma da legenda) -->
+        <div class="segmentado troca-idioma" role="radiogroup" data-i18n-aria="t.interface">
+          <label><input type="radio" name="interface" value="pt" /><span>PT</span></label>
+          <label><input type="radio" name="interface" value="en" /><span>EN</span></label>
+          <label><input type="radio" name="interface" value="es" /><span>ES</span></label>
+        </div>
+        <!-- Troca entre tema escuro e claro -->
+        <button id="btnTema" class="troca-tema" type="button">
+          <svg class="lua" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6.2 1.6a6.5 6.5 0 1 0 8.2 8.2A5.5 5.5 0 0 1 6.2 1.6z" /></svg>
+          <svg class="sol" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" /></svg>
+        </button>
       </div>
-      <h1>Clipador<span>.</span></h1>
+      <h1>Los Angeles Clippers<span>.</span></h1>
       <p data-i18n="header.sub">Corte, enquadre em 9:16 e baixe. Tudo roda no seu navegador — nada é enviado pra servidor.</p>
     </header>
 

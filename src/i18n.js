@@ -124,6 +124,8 @@ const TEXTOS = {
     't.notaIA': 'Nota que a IA deu pro momento',
     't.forcaSom': 'Quanto o som se destaca do resto do vídeo',
     't.interface': 'Idioma da interface',
+    'tema.paraClaro': 'Mudar para o tema claro',
+    'tema.paraEscuro': 'Mudar para o tema escuro',
   },
 
   en: {
@@ -239,6 +241,8 @@ const TEXTOS = {
     't.notaIA': 'Score the AI gave this moment',
     't.forcaSom': 'How much the sound stands out from the rest of the video',
     't.interface': 'Interface language',
+    'tema.paraClaro': 'Switch to the light theme',
+    'tema.paraEscuro': 'Switch to the dark theme',
   },
 
   es: {
@@ -354,6 +358,8 @@ const TEXTOS = {
     't.notaIA': 'Nota que la IA le dio al momento',
     't.forcaSom': 'Cuánto destaca el sonido frente al resto del video',
     't.interface': 'Idioma de la interfaz',
+    'tema.paraClaro': 'Cambiar al tema claro',
+    'tema.paraEscuro': 'Cambiar al tema oscuro',
   },
 };
 

@@ -4,8 +4,14 @@
    Regra da casa: cor só em 3 lugares — logo, ação principal e seleção.
    ===================================================================== */
 
-/* ===== Tokens (troque aqui pra mudar o visual inteiro) ===== */
+/* ===== Tokens (troque aqui pra mudar o visual inteiro) =====
+   Cada tema define as MESMAS variáveis com valores diferentes.
+   O resto do arquivo só usa var(--nome), então não sabe qual tema está ativo. */
+
+/* Tema escuro (padrão): noite em Vice City, rosa e laranja */
 :root {
+  color-scheme: dark;            /* avisa o navegador pra desenhar barras de rolagem etc. em escuro */
+
   /* superfícies */
   --fundo: #0b0910;
   --card: #13101a;
@@ -23,9 +29,15 @@
   --fraco: #6b6579;
 
   /* acento */
-  --rosa: #ff4d94;
-  --laranja: #ff9f43;
+  --acento: #ff4d94;             /* cor principal: botões de ação, foco, seleção */
+  --acento-hover: #ff66a3;
+  --acento-2: #ff9f43;           /* segunda cor: fim dos degradês, duração, moldura */
+  --sobre-acento: #1a0710;       /* texto em cima da cor principal */
   --foco: rgba(255, 77, 148, .35);
+  --acento-suave: rgba(255, 77, 148, .05);
+  --brilho: rgba(255, 77, 148, .14);   /* luz no topo da página */
+  --tecla: rgba(255, 255, 255, .06);
+  --seta: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%239a94aa' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
 
   /* forma */
   --raio: 8px;
@@ -33,6 +45,34 @@
   --altura: 32px;          /* altura padrão de botões e campos */
   --fonte: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
+}
+
+/* Tema claro: areia e mar de Vice City, bege com azul ciano */
+:root[data-tema="claro"] {
+  color-scheme: light;
+
+  --fundo: #f1eadd;
+  --card: #faf6ee;
+  --campo: #fffdf8;
+  --elevado: #efe8da;
+  --hover: #e6decd;
+
+  --borda: rgba(60, 45, 20, .13);
+  --borda-forte: rgba(60, 45, 20, .26);
+
+  --texto: #211d17;
+  --suave: #6a6256;
+  --fraco: #7d7467;
+
+  --acento: #14b8cf;
+  --acento-hover: #35c7dc;
+  --acento-2: #1b6fd0;
+  --sobre-acento: #04262c;
+  --foco: rgba(20, 184, 207, .35);
+  --acento-suave: rgba(20, 184, 207, .08);
+  --brilho: rgba(20, 184, 207, .20);
+  --tecla: rgba(60, 45, 20, .06);
+  --seta: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%236a6256' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
 }
 
 * { box-sizing: border-box; }
@@ -46,7 +86,7 @@ body {
   letter-spacing: -0.005em;
   color: var(--texto);
   background:
-    radial-gradient(900px 420px at 50% -120px, rgba(255, 77, 148, .14), transparent 70%),
+    radial-gradient(900px 420px at 50% -120px, var(--brilho), transparent 70%),
     var(--fundo);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -54,20 +94,28 @@ body {
 
 /* ===== Topo ===== */
 .topo { position: relative; text-align: center; padding: 40px 16px 12px; }
-.troca-idioma { position: absolute; top: 14px; right: 16px; }
+.topo-acoes { position: absolute; top: 14px; right: 16px; display: flex; align-items: center; gap: 8px; }
+.troca-tema { width: 28px; height: 28px; padding: 0; color: var(--suave); background: var(--campo); }
+.troca-tema:hover { color: var(--texto); }
+/* Mostra a lua no tema escuro e o sol no claro (o ícone indica o tema atual) */
+.troca-tema .sol { display: none; }
+:root[data-tema="claro"] .troca-tema .sol { display: block; }
+:root[data-tema="claro"] .troca-tema .lua { display: none; }
+/* Troca de tema suave. A cor do texto fica de fora: ela é herdada, e animar herança cria atraso em cascata */
+body, .card, .campo, .segmentado, .momentos { transition: background-color .2s, border-color .2s; }
 .troca-idioma span { height: 22px; padding: 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
 .topo h1 {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  background: linear-gradient(90deg, var(--rosa), var(--laranja));
+  background: linear-gradient(90deg, var(--acento), var(--acento-2));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   display: inline-block;
 }
-.topo h1 span { color: var(--laranja); }
+.topo h1 span { color: var(--acento-2); }
 .topo p { color: var(--suave); margin: 6px 0 0; font-size: 14px; }
 
 main {
@@ -106,8 +154,8 @@ main {
 .dropzone strong { font-size: 14px; font-weight: 600; }
 .dropzone span { color: var(--suave); }
 .dropzone:hover, .dropzone.arrastando {
-  border-color: var(--rosa);
-  background: rgba(255, 77, 148, .05);
+  border-color: var(--acento);
+  background: var(--acento-suave);
 }
 
 .modos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -154,14 +202,14 @@ main {
   border-radius: 6px;
   outline: 0;
 }
-.linha-chave input:focus { border-color: var(--rosa); box-shadow: 0 0 0 3px var(--foco); }
+.linha-chave input:focus { border-color: var(--acento); box-shadow: 0 0 0 3px var(--foco); }
 .linha-chave a { color: var(--suave); }
 .linha-chave a:hover { color: var(--texto); }
 .momentos ol { list-style: none; margin: 0; padding: 4px; max-height: 220px; overflow-y: auto; }
 .momentos ol:empty { display: none; }
 .momentos li { display: flex; align-items: center; gap: 10px; padding: 2px 8px; border-radius: 6px; }
 .momentos li:hover { background: var(--elevado); }
-.momentos li.ativo { background: var(--hover); box-shadow: inset 2px 0 0 var(--rosa); }
+.momentos li.ativo { background: var(--hover); box-shadow: inset 2px 0 0 var(--acento); }
 .momentos .faixa {
   height: 28px;
   padding: 0 6px;
@@ -173,10 +221,10 @@ main {
 .momentos .duracao { color: var(--fraco); font-family: var(--mono); font-size: 11px; width: 32px; }
 .momentos .titulo { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .momentos .forca { flex: none; width: 96px; height: 4px; border-radius: 2px; background: var(--borda); overflow: hidden; }
-.momentos .forca > div { height: 100%; background: linear-gradient(90deg, var(--rosa), var(--laranja)); }
+.momentos .forca > div { height: 100%; background: linear-gradient(90deg, var(--acento), var(--acento-2)); }
 .momentos .dica { margin: 0; padding: 12px; }
 .check { display: inline-flex; align-items: center; gap: 6px; color: var(--suave); cursor: pointer; }
-input[type="checkbox"] { accent-color: var(--rosa); width: 14px; height: 14px; margin: 0; cursor: pointer; }
+input[type="checkbox"] { accent-color: var(--acento); width: 14px; height: 14px; margin: 0; cursor: pointer; }
 
 /* ===== Player + moldura de enquadramento ===== */
 .palco { display: flex; justify-content: center; }
@@ -193,7 +241,7 @@ input[type="checkbox"] { accent-color: var(--rosa); width: 14px; height: 14px; m
   position: absolute;
   top: 0;
   bottom: 0;
-  border: 1px solid var(--laranja);
+  border: 1px solid var(--acento-2);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, .6);  /* escurece o que fica fora do clipe */
   pointer-events: none;
 }
@@ -242,13 +290,13 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 button svg { width: 14px; height: 14px; flex: none; }
 
 button.primario {
-  background: var(--rosa);
+  background: var(--acento);
   border-color: transparent;
-  color: #1a0710;
+  color: var(--sobre-acento);
   font-weight: 600;
   padding: 0 16px;
 }
-button.primario:hover { background: #ff66a3; border-color: transparent; }
+button.primario:hover { background: var(--acento-hover); border-color: transparent; }
 
 button.secundario { background: transparent; color: var(--suave); }
 button.secundario:hover { background: var(--elevado); color: var(--texto); }
@@ -267,7 +315,7 @@ kbd {
   font-size: 10px;
   line-height: 1;
   color: var(--suave);
-  background: rgba(255, 255, 255, .06);
+  background: var(--tecla);
   border: 1px solid var(--borda);
   border-radius: 4px;
   padding: 3px 5px;
@@ -284,7 +332,7 @@ kbd {
   transition: border-color .12s, box-shadow .12s;
 }
 .campo:hover { border-color: var(--borda-forte); }
-.campo:focus-within { border-color: var(--rosa); box-shadow: 0 0 0 3px var(--foco); }
+.campo:focus-within { border-color: var(--acento); box-shadow: 0 0 0 3px var(--foco); }
 .campo label { padding: 0 2px 0 10px; color: var(--fraco); }
 .campo input[type="number"] {
   font: inherit;
@@ -319,7 +367,7 @@ kbd {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
-  color: var(--laranja);
+  color: var(--acento-2);
   padding: 0 4px;
 }
 
@@ -386,8 +434,8 @@ input[type="range"]::-moz-range-thumb {
   border: 0;
   box-shadow: 0 0 0 3px var(--card), 0 0 0 4px var(--borda-forte);
 }
-input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--card), 0 0 0 4px var(--rosa); }
-input[type="range"]:hover::-moz-range-thumb { box-shadow: 0 0 0 3px var(--card), 0 0 0 4px var(--rosa); }
+input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--card), 0 0 0 4px var(--acento); }
+input[type="range"]:hover::-moz-range-thumb { box-shadow: 0 0 0 3px var(--card), 0 0 0 4px var(--acento); }
 .extremo { color: var(--fraco); font-size: 12px; }
 
 /* ===== Select ===== */
@@ -398,9 +446,7 @@ select {
   height: var(--altura);
   padding: 0 30px 0 10px;
   color: var(--texto);
-  background: var(--campo)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%239a94aa' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E")
-    no-repeat right 10px center;
+  background: var(--campo) var(--seta) no-repeat right 10px center;
   border: 1px solid var(--borda);
   border-radius: var(--raio);
   cursor: pointer;
@@ -457,7 +503,7 @@ select option { background: var(--card); color: var(--texto); }
   outline: 0;
 }
 .editor-legenda input[type="text"]:hover { background: var(--elevado); }
-.editor-legenda input[type="text"]:focus { background: var(--elevado); border-color: var(--rosa); }
+.editor-legenda input[type="text"]:focus { background: var(--elevado); border-color: var(--acento); }
 
 /* ===== Progresso ===== */
 .progresso { display: grid; gap: 6px; padding-top: 14px; }
@@ -465,7 +511,7 @@ select option { background: var(--card); color: var(--texto); }
 .barra > div {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--rosa), var(--laranja));
+  background: linear-gradient(90deg, var(--acento), var(--acento-2));
   transition: width .2s;
 }
 #status { color: var(--suave); }

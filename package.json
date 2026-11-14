@@ -1,7 +1,7 @@
 {
   "name": "clipador",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "module",
   "description": "Editor de clipes verticais que roda 100% no navegador (FFmpeg.wasm)",
   "scripts": {
