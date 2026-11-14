@@ -552,3 +552,74 @@ select option { background: var(--card); color: var(--texto); }
 }
 .clipes a.baixar:hover { background: var(--hover); border-color: var(--borda-forte); }
 .clipes .remover { width: var(--altura); padding: 0; color: var(--suave); background: transparent; }
+
+/* ===== Responsivo =====
+   Regra: os blocos quebram linha antes de vazar da tela.
+   Telas largas: layout de sempre. Tablet (até 900px) e celular (até 640px) ajustam espaços e quebras. */
+
+/* Evita que um filho com largura fixa empurre o layout pra fora da tela */
+main, .card, .conteudo > *, .momentos, .editor-legenda { min-width: 0; max-width: 100%; }
+.segmentado { flex-wrap: wrap; }
+.linha-chave input { min-width: 0; }
+input[type="range"] { width: 100%; }
+
+@media (max-width: 900px) {
+  main { padding: 12px; }
+}
+
+@media (max-width: 640px) {
+  /* topo: abre espaço pros botões de idioma e tema, que ficam absolutos no canto */
+  .topo { padding: 56px 12px 12px; }
+  .topo h1 { font-size: 24px; }
+  .topo p { font-size: 13px; }
+  .topo-acoes { top: 10px; right: 10px; }
+
+  main { padding: 10px; gap: 10px; }
+  .card { padding: 12px; }
+  .card h2 { margin-bottom: 10px; }
+
+  /* upload: cartões de vídeo menores pra caber mais na tela */
+  .dropzone { padding: 32px 12px; }
+  .modos .dropzone { padding: 24px 12px; }
+
+  /* player: menos altura pra sobrar espaço pros controles */
+  .video-wrap video { max-height: 50vh; }
+
+  /* formato: as três opções quebram em duas linhas se não couberem */
+  .segmentado span { padding: 0 10px; }
+
+  /* campos de tempo: um pouco mais estreitos */
+  .campo input[type="number"] { width: 52px; }
+
+  /* momentos: seletores ocupam a linha, botões ocupam a largura */
+  .momentos-topo { padding: 8px; }
+  .momentos-topo select { flex: 1 1 130px; }
+  .momentos-topo .empurra { margin-left: 0; }
+  .momentos-topo button { flex: 1 1 100%; }
+  .momentos li { flex-wrap: wrap; }
+  .momentos .forca { width: 64px; }
+  .linha-chave label { flex: 1 1 100%; }
+  .linha-chave input { flex: 1 1 100%; }
+
+  /* ações finais: botões empilham e dividem a largura */
+  .acoes-finais { flex-direction: column; }
+  .acoes-finais button { width: 100%; }
+
+  /* ver trecho: fora do canto direito, ocupa a linha */
+  #btnOuvir { margin-left: 0; width: 100%; }
+
+  /* editor de legenda */
+  .editor-legenda { max-height: 200px; }
+  .editor-legenda .tempo { width: 48px; }
+
+  /* clipes exportados: duas colunas */
+  .clipes { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .clipes li { padding: 6px; }
+}
+
+@media (max-width: 380px) {
+  .topo h1 { font-size: 22px; }
+  .campo { flex-wrap: wrap; height: auto; padding: 4px 0; }
+  .campo input[type="number"] { height: 28px; }
+  .campo button { height: 28px; }
+}
