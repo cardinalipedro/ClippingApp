@@ -10,9 +10,19 @@
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
+    <!--
+      Os textos com data-i18n são preenchidos pelo src/i18n.js no idioma escolhido.
+      O texto escrito aqui (em português) é só o que aparece antes do JavaScript carregar.
+    -->
     <header class="topo">
+      <!-- Troca o idioma da INTERFACE (não o idioma da legenda) -->
+      <div class="segmentado troca-idioma" role="radiogroup" data-i18n-aria="t.interface">
+        <label><input type="radio" name="interface" value="pt" /><span>PT</span></label>
+        <label><input type="radio" name="interface" value="en" /><span>EN</span></label>
+        <label><input type="radio" name="interface" value="es" /><span>ES</span></label>
+      </div>
       <h1>Clipador<span>.</span></h1>
-      <p>Corte, enquadre em 9:16 e baixe. Tudo roda no seu navegador — nada é enviado pra servidor.</p>
+      <p data-i18n="header.sub">Corte, enquadre em 9:16 e baixe. Tudo roda no seu navegador — nada é enviado pra servidor.</p>
     </header>
 
     <main>
@@ -20,20 +30,20 @@
       <section id="etapaUpload" class="card">
         <div class="modos">
           <label class="dropzone" data-modo="curto">
-            <strong>Clipe curto</strong>
-            <span>Já tem o trecho pronto? A legenda é gerada sozinha.</span>
-            <span class="formatos">Arraste ou clique · até 3 min</span>
+            <strong data-i18n="modo.curto.titulo">Clipe curto</strong>
+            <span data-i18n="modo.curto.desc">Já tem o trecho pronto? A legenda é gerada sozinha.</span>
+            <span class="formatos" data-i18n="modo.curto.dica">Arraste ou clique · até 3 min</span>
             <input type="file" accept="video/*,.mkv,.mov" hidden />
           </label>
           <label class="dropzone" data-modo="longo">
-            <strong>Vídeo longo</strong>
-            <span>O app acha os melhores momentos, corta e legenda cada um.</span>
-            <span class="formatos">Arraste ou clique · 10 min ou mais</span>
+            <strong data-i18n="modo.longo.titulo">Vídeo longo</strong>
+            <span data-i18n="modo.longo.desc">O app acha os melhores momentos, corta e legenda cada um.</span>
+            <span class="formatos" data-i18n="modo.longo.dica">Arraste ou clique · 10 min ou mais</span>
             <input type="file" accept="video/*,.mkv,.mov" hidden />
           </label>
         </div>
         <div class="grupo sem-linha">
-          <label class="rotulo" for="idiomaInicial">Idioma falado</label>
+          <label class="rotulo" for="idiomaInicial" data-i18n="idioma.falado">Idioma falado</label>
           <div class="conteudo">
             <select id="idiomaInicial">
               <option value="portuguese">Português</option>
@@ -56,102 +66,108 @@
           </div>
         </div>
 
-        <!-- Só aparece no modo "vídeo longo" -->
+        <!-- Só aparece no modo "vídeo longo". Nada roda até clicar em "Encontrar momentos". -->
         <div class="momentos" id="painelMomentos" hidden>
           <div class="momentos-topo">
-            <span class="rotulo">Momentos</span>
-            <select id="metodoMomentos" title="Como escolher os momentos">
-              <option value="ia">Por IA (Gemini)</option>
-              <option value="som">Pelo som</option>
+            <span class="rotulo" data-i18n="mom.rotulo">Momentos</span>
+            <select id="metodoMomentos" data-i18n-title="mom.metodo.titulo">
+              <option value="ia" data-i18n="mom.ia">Por IA (Gemini)</option>
+              <option value="som" data-i18n="mom.som">Pelo som</option>
             </select>
-            <select id="duracaoClipe" title="Duração de cada clipe">
-              <option value="20">Clipes de 20 s</option>
-              <option value="30" selected>Clipes de 30 s</option>
-              <option value="45">Clipes de 45 s</option>
-              <option value="60">Clipes de 60 s</option>
+            <select id="duracaoClipe" data-i18n-title="mom.dur.titulo">
+              <option value="20" data-i18n="mom.dur" data-n="20">Clipes de 20 s</option>
+              <option value="30" data-i18n="mom.dur" data-n="30" selected>Clipes de 30 s</option>
+              <option value="45" data-i18n="mom.dur" data-n="45">Clipes de 45 s</option>
+              <option value="60" data-i18n="mom.dur" data-n="60">Clipes de 60 s</option>
             </select>
-            <select id="quantidadeClipes" title="Quantidade máxima de clipes">
-              <option value="3">Até 3</option>
-              <option value="5" selected>Até 5</option>
-              <option value="8">Até 8</option>
-              <option value="10">Até 10</option>
+            <select id="quantidadeClipes" data-i18n-title="mom.qtd.titulo">
+              <option value="3" data-i18n="mom.qtd" data-n="3">Até 3</option>
+              <option value="5" data-i18n="mom.qtd" data-n="5" selected>Até 5</option>
+              <option value="8" data-i18n="mom.qtd" data-n="8">Até 8</option>
+              <option value="10" data-i18n="mom.qtd" data-n="10">Até 10</option>
             </select>
-            <label class="check empurra"><input type="checkbox" id="legendarLote" checked /> Legendar</label>
-            <button id="btnLote" class="primario" type="button">Gerar clipes</button>
+            <select id="idiomaMomentos" data-i18n-title="idioma.falado.titulo">
+              <option value="portuguese">Português</option>
+              <option value="english">English</option>
+              <option value="spanish">Español</option>
+            </select>
+            <label class="check"><input type="checkbox" id="legendarLote" checked /> <span data-i18n="mom.legendar">Legendar</span></label>
+            <button id="btnAnalisar" class="primario empurra" type="button">Encontrar momentos</button>
+            <button id="btnLote" class="primario" type="button" hidden>Gerar clipes</button>
           </div>
           <div class="linha-chave" id="linhaChave" hidden>
-            <label for="chaveGemini">Chave do Gemini</label>
-            <input type="password" id="chaveGemini" placeholder="Cole aqui a sua chave de API" autocomplete="off" spellcheck="false" />
-            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Criar chave grátis</a>
+            <label for="chaveGemini" data-i18n="mom.chave">Chave do Gemini</label>
+            <input type="password" id="chaveGemini" data-i18n-placeholder="mom.chave.placeholder" autocomplete="off" spellcheck="false" />
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" data-i18n="mom.chave.link">Criar chave grátis</a>
           </div>
           <ol id="listaMomentos"></ol>
-          <p class="dica" id="dicaMomentos">Os momentos aparecem aqui depois da análise do áudio.</p>
+          <p class="dica" id="dicaMomentos" data-i18n="mom.dica">Escolha as opções acima e clique em Encontrar momentos.</p>
         </div>
 
         <div class="controles">
           <div class="grupo">
-            <span class="rotulo">Trecho</span>
+            <span class="rotulo" data-i18n="trecho">Trecho</span>
             <div class="conteudo">
               <div class="campo">
-                <label for="inicio">Início</label>
+                <label for="inicio" data-i18n="inicio">Início</label>
                 <input type="number" id="inicio" step="0.1" min="0" value="0" />
                 <span class="unidade">s</span>
-                <button id="btnInicio" type="button" title="Usar o ponto atual do vídeo como início">Marcar <kbd>I</kbd></button>
+                <button id="btnInicio" type="button" data-i18n-title="marcar.inicio.titulo"><span data-i18n="marcar">Marcar</span> <kbd>I</kbd></button>
               </div>
               <div class="campo">
-                <label for="fim">Fim</label>
+                <label for="fim" data-i18n="fim">Fim</label>
                 <input type="number" id="fim" step="0.1" min="0" value="0" />
                 <span class="unidade">s</span>
-                <button id="btnFim" type="button" title="Usar o ponto atual do vídeo como fim">Marcar <kbd>O</kbd></button>
+                <button id="btnFim" type="button" data-i18n-title="marcar.fim.titulo"><span data-i18n="marcar">Marcar</span> <kbd>O</kbd></button>
               </div>
-              <span id="duracao" class="pill">Duração: 0.0s</span>
+              <span id="duracao" class="pill"></span>
               <button id="btnOuvir" class="secundario empurra" type="button">
                 <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" /></svg>
-                Ver trecho <kbd>P</kbd>
+                <span data-i18n="ver">Ver trecho</span> <kbd>P</kbd>
               </button>
             </div>
           </div>
 
           <div class="grupo">
-            <span class="rotulo" id="rotuloFormato">Formato</span>
+            <span class="rotulo" id="rotuloFormato" data-i18n="formato">Formato</span>
             <div class="conteudo">
               <div class="segmentado" role="radiogroup" aria-labelledby="rotuloFormato">
-                <label><input type="radio" name="formato" value="vertical" checked /><span>Vertical 9:16</span></label>
-                <label><input type="radio" name="formato" value="desfocado" /><span>Fundo desfocado</span></label>
-                <label><input type="radio" name="formato" value="original" /><span>Original</span></label>
+                <label><input type="radio" name="formato" value="vertical" checked /><span data-i18n="fmt.vertical">Vertical 9:16</span></label>
+                <label><input type="radio" name="formato" value="desfocado" /><span data-i18n="fmt.desfocado">Fundo desfocado</span></label>
+                <label><input type="radio" name="formato" value="original" /><span data-i18n="fmt.original">Original</span></label>
               </div>
             </div>
           </div>
 
           <div class="grupo" id="linhaPosicao">
-            <label class="rotulo" for="posicao">Enquadramento</label>
+            <label class="rotulo" for="posicao" data-i18n="enquadramento">Enquadramento</label>
             <div class="conteudo">
-              <span class="extremo">Esq.</span>
+              <span class="extremo" data-i18n="esq">Esq.</span>
               <input type="range" id="posicao" min="0" max="100" value="50" />
-              <span class="extremo">Dir.</span>
+              <span class="extremo" data-i18n="dir">Dir.</span>
             </div>
           </div>
 
           <div class="grupo" id="linhaResolucao">
-            <label class="rotulo" for="resolucao">Resolução</label>
+            <label class="rotulo" for="resolucao" data-i18n="resolucao">Resolução</label>
             <div class="conteudo">
               <select id="resolucao">
                 <option value="1080">1080 × 1920</option>
-                <option value="720">720 × 1280 (exporta mais rápido)</option>
+                <option value="720" data-i18n="res.720">720 × 1280 (exporta mais rápido)</option>
               </select>
             </div>
           </div>
 
           <div class="grupo">
-            <label class="rotulo" for="idioma">Legenda</label>
+            <label class="rotulo" for="idioma" data-i18n="legenda">Legenda</label>
             <div class="conteudo">
-              <select id="idioma" title="Idioma falado no vídeo">
+              <select id="idioma" data-i18n-title="idioma.falado.titulo">
                 <option value="portuguese">Português</option>
                 <option value="english">English</option>
                 <option value="spanish">Español</option>
               </select>
               <button id="btnLegenda" type="button">Gerar legenda</button>
-              <button id="btnRemoverLegenda" class="secundario" type="button" hidden>Remover</button>
+              <button id="btnRemoverLegenda" class="secundario" type="button" hidden data-i18n="legenda.remover">Remover</button>
               <span class="dica" id="dicaLegenda"></span>
             </div>
           </div>
@@ -162,19 +178,19 @@
 
           <div class="acoes-finais">
             <button id="btnExportar" class="primario" type="button">Exportar clipe</button>
-            <button id="btnTrocar" class="secundario" type="button">Trocar vídeo</button>
+            <button id="btnTrocar" class="secundario" type="button" data-i18n="trocar">Trocar vídeo</button>
           </div>
 
           <div class="progresso" id="progresso" hidden>
             <div class="barra"><div id="barra"></div></div>
-            <span id="status">Preparando…</span>
+            <span id="status"></span>
           </div>
         </div>
       </section>
 
       <!-- ETAPA 3: resultados -->
       <section id="etapaClipes" class="card" hidden>
-        <h2>Clipes exportados</h2>
+        <h2 data-i18n="clipes.titulo">Clipes exportados</h2>
         <ul id="listaClipes" class="clipes"></ul>
       </section>
     </main>

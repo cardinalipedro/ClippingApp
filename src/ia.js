@@ -8,6 +8,8 @@
 //  ficar escondida num backend.
 // =====================================================================
 
+import { t } from './i18n.js';
+
 const API = 'https://generativelanguage.googleapis.com/v1beta';
 
 // Formato que a IA é obrigada a devolver ("saída estruturada")
@@ -86,7 +88,7 @@ export function organizarMomentos(brutos, { duracaoTotal, duracaoClipe, quantida
 async function listarModelosFlash(chave) {
   const resposta = await fetch(`${API}/models?pageSize=200`, { headers: { 'x-goog-api-key': chave } });
   const dados = await resposta.json().catch(() => ({}));
-  if (!resposta.ok) throw new Error(dados.error?.message || `chave recusada (erro ${resposta.status})`);
+  if (!resposta.ok) throw new Error(dados.error?.message || t('e.chave', { c: resposta.status }));
 
   return (dados.models || [])
     .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
@@ -101,7 +103,7 @@ async function listarModelosFlash(chave) {
  */
 export async function encontrarMomentosComIA(p) {
   const modelos = await listarModelosFlash(p.chave);
-  if (!modelos.length) throw new Error('não achei um modelo Gemini Flash disponível pra essa chave');
+  if (!modelos.length) throw new Error(t('e.semModelo'));
 
   const corpo = JSON.stringify({
     contents: [{
@@ -117,7 +119,7 @@ export async function encontrarMomentosComIA(p) {
     },
   });
 
-  let ultimoErro = 'sem resposta';
+  let ultimoErro = t('e.semResposta');
   for (const modelo of modelos.slice(0, 3)) {
     const resposta = await fetch(`${API}/models/${modelo}:generateContent`, {
       method: 'POST',
@@ -140,7 +142,7 @@ export async function encontrarMomentosComIA(p) {
           const dadosNova = await nova.json().catch(() => ({}));
           return finalizarResposta(dadosNova, modelo, p);
         }
-        ultimoErro = 'o Gemini está com alta demanda agora. Tente de novo em alguns minutos.';
+        ultimoErro = t('e.demanda');
         continue;
       }
       // 403/404/429: modelo fora do plano grátis ou cota estourada → tenta o modelo anterior
@@ -150,7 +152,7 @@ export async function encontrarMomentosComIA(p) {
 
     const resultado = finalizarResposta(dados, modelo, p);
     if (resultado) return resultado;
-    ultimoErro = 'a IA não devolveu resposta';
+    ultimoErro = t('e.semResposta');
   }
   throw new Error(ultimoErro.slice(0, 160));
 }

@@ -9,6 +9,7 @@ import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { encontrarMomentos, criarAjustador } from './momentos.js';
 import { encontrarMomentosComIA } from './ia.js';
+import { t, aplicarTraducoes, definirIdioma, idiomaAtual, aoTrocarIdioma } from './i18n.js';
 import { agruparEmBlocos, aplicarTextoAoBloco, gerarASS, textoDoBloco } from './legenda.js';
 import urlFonteLegenda from './fontes/Inter-ExtraBold.otf?url'; // o Vite troca isso pela URL do arquivo
 
@@ -64,6 +65,8 @@ const el = {
   metodoMomentos: $('metodoMomentos'),
   linhaChave: $('linhaChave'),
   chaveGemini: $('chaveGemini'),
+  btnAnalisar: $('btnAnalisar'),
+  idiomaMomentos: $('idiomaMomentos'),
 };
 
 // ---------- Estado da aplicação (a "memória" do app) ----------
@@ -153,7 +156,7 @@ function abrirArquivo(arquivo, modo) {
   if (!arquivo) return;
   const ehVideo = arquivo.type.startsWith('video/') || /\.(mp4|mov|m4v|mkv|webm)$/i.test(arquivo.name);
   if (!ehVideo) {
-    alert('Esse arquivo não parece ser um vídeo.');
+    alert(t('a.naoVideo'));
     return;
   }
 
@@ -181,18 +184,19 @@ el.video.addEventListener('loadedmetadata', () => {
   // Clipe curto: o trecho já é o vídeo inteiro. Senão, começa com uma sugestão de 30 s.
   estado.fim = legendarSozinho ? Math.floor(duracao * 10) / 10 : Math.min(duracao, DURACAO_PADRAO);
   el.idioma.value = el.idiomaInicial.value;
+  el.idiomaMomentos.value = el.idiomaInicial.value;
   el.painelMomentos.hidden = curto;
   mostrarEtapa('editor');
   sincronizarTempos();
   atualizarFormato();
 
+  // Clipe curto: já legenda. Vídeo longo: espera o clique em "Encontrar momentos".
   if (legendarSozinho) gerarLegenda();
-  else if (!curto) analisarMomentos();
-  else atualizarDicaLegenda('Vídeo com mais de 3 min: marque o trecho e clique em Gerar legenda.');
+  else if (curto) atualizarDicaLegenda(t('d.longoDemais'));
 });
 
 el.video.addEventListener('error', () => {
-  alert('O navegador não conseguiu abrir esse vídeo. Tente um .mp4 (H.264), que é o formato mais compatível.');
+  alert(t('a.naoAbre'));
 });
 
 el.btnTrocar.addEventListener('click', () => {
@@ -221,7 +225,7 @@ function marcarInicio() {
 function marcarFim() {
   const t = arredondar(el.video.currentTime);
   if (t <= estado.inicio) {
-    alert('O fim precisa vir depois do início.');
+    alert(t('a.fimDepois'));
     return;
   }
   estado.fim = t;
@@ -261,7 +265,7 @@ function sincronizarTempos() {
   el.inicio.value = estado.inicio.toFixed(1);
   el.fim.value = estado.fim.toFixed(1);
   el.inicio.max = el.fim.max = el.video.duration || 0;
-  el.duracao.textContent = `Duração: ${(estado.fim - estado.inicio).toFixed(1)}s`;
+  el.duracao.textContent = t('duracao', { s: (estado.fim - estado.inicio).toFixed(1) });
 
   // No modo longo, ajustar o trecho ajusta o momento que está aberto
   const momento = estado.momentos[estado.momentoAtivo];
@@ -274,7 +278,7 @@ function sincronizarTempos() {
   // A legenda é feita pra um trecho específico: se o trecho mudou, ela não serve mais
   const l = estado.legenda;
   if (l && (l.inicioTrecho !== estado.inicio || l.fimTrecho !== estado.fim)) {
-    removerLegenda('O trecho mudou — gere a legenda de novo.');
+    removerLegenda(t('d.trechoMudou'));
   }
 }
 
@@ -384,11 +388,11 @@ function montarArgumentos({ entrada, saida, inicio, duracao, formato, posicao, a
 /** Garante que o FFmpeg está carregado e que o vídeo atual está copiado dentro dele. */
 const PASTA_ENTRADA = '/entrada';
 async function prepararEntrada() {
-  mostrarStatus('Carregando o motor de vídeo (só demora na primeira vez)…', 0);
+  mostrarStatus(t('s.carregando'), 0);
   await carregarFFmpeg();
   if (estado.arquivoNoFFmpeg === estado.arquivo) return;
 
-  mostrarStatus('Lendo o vídeo…', 0);
+  mostrarStatus(t('s.lendo'), 0);
   const ext = (estado.arquivo.name.split('.').pop() || 'mp4').toLowerCase();
 
   // Tira o vídeo anterior
@@ -408,7 +412,7 @@ async function prepararEntrada() {
     // Plano B (jeito antigo): copiar o vídeo inteiro pra memória
     console.warn('Não deu pra montar o arquivo; copiando pra memória.', erro);
     if (estado.arquivo.size > LIMITE_COPIA_BYTES) {
-      throw new Error('esse vídeo é grande demais pra este navegador (mais de 1,5 GB)');
+      throw new Error(t('e.grande'));
     }
     estado.nomeEntrada = `entrada.${ext}`;
     await ffmpeg.writeFile(estado.nomeEntrada, await fetchFile(estado.arquivo));
@@ -432,7 +436,7 @@ async function exportar() {
 
   const duracao = estado.fim - estado.inicio;
   if (duracao < 0.5) {
-    alert('O trecho precisa ter pelo menos meio segundo.');
+    alert(t('a.curto'));
     return;
   }
 
@@ -467,7 +471,7 @@ async function exportar() {
     });
     console.info('ffmpeg', args.join(' '));
 
-    mostrarStatus(formato === 'original' ? 'Cortando…' : 'Processando (pode levar alguns minutos)…', 0);
+    mostrarStatus(t(formato === 'original' ? 's.cortando' : 's.processando'), 0);
     estado.duracaoExportando = duracao;
     estado.ultimosLogs = [];
     const inicioRelogio = performance.now();
@@ -475,7 +479,7 @@ async function exportar() {
     const codigo = await ffmpeg.exec(args);
     if (codigo !== 0) {
       const pista = estado.ultimosLogs.filter((l) => /error|invalid|failed/i.test(l)).slice(-2).join(' | ');
-      throw new Error(`o FFmpeg falhou (código ${codigo}). ${pista}`);
+      throw new Error(t('e.ffmpeg', { c: codigo, p: pista }));
     }
 
     const dados = await ffmpeg.readFile(saida);
@@ -487,11 +491,11 @@ async function exportar() {
 
     const segundos = ((performance.now() - inicioRelogio) / 1000).toFixed(1);
     atualizarBarra(1);
-    mostrarStatus(`Pronto! Exportado em ${segundos}s.`);
+    mostrarStatus(t('s.pronto', { s: segundos }));
     return true;
   } catch (erro) {
     console.error(erro);
-    mostrarStatus(`Erro: ${erro.message}`);
+    mostrarStatus(t('s.erro', { m: erro.message }));
     return false;
   } finally {
     estado.duracaoExportando = 0;
@@ -508,7 +512,9 @@ function definirOcupado(ocupado) {
   el.duracaoClipe.disabled = ocupado;
   el.quantidadeClipes.disabled = ocupado;
   el.metodoMomentos.disabled = ocupado;
-  el.btnExportar.textContent = ocupado ? 'Aguarde…' : 'Exportar clipe';
+  el.btnAnalisar.disabled = ocupado;
+  el.idiomaMomentos.disabled = ocupado;
+  el.btnExportar.textContent = t(ocupado ? 'aguarde' : 'exportar');
 }
 
 function mostrarStatus(texto, progresso) {
@@ -539,10 +545,7 @@ function transcrever(audio, idioma) {
   return new Promise((resolver, rejeitar) => {
     worker.onmessage = ({ data }) => {
       if (data.tipo === 'progresso') {
-        const texto = data.etapa === 'modelo'
-          ? 'Baixando a IA de legendas (só na primeira vez)…'
-          : 'Ouvindo o trecho e escrevendo a legenda…';
-        mostrarStatus(texto, data.fracao);
+        mostrarStatus(t(data.etapa === 'modelo' ? 's.baixandoIA' : 's.ouvindoTrecho'), data.fracao);
       } else if (data.tipo === 'pronto') {
         resolver(data.palavras);
       } else if (data.tipo === 'erro') {
@@ -551,7 +554,7 @@ function transcrever(audio, idioma) {
     };
     worker.onerror = (e) => {
       workerTranscricao = null; // cria um worker novo na próxima tentativa
-      rejeitar(new Error(e.message || 'a IA de legendas não carregou'));
+      rejeitar(new Error(e.message || t('e.iaLegenda')));
     };
     worker.postMessage({ tipo: 'transcrever', audio, idioma }, [audio.buffer]);
   });
@@ -565,7 +568,7 @@ async function gerarLegenda() {
   const inicio = estado.inicio;
   const fim = estado.fim;
   if (fim - inicio < 0.5) {
-    alert('O trecho precisa ter pelo menos meio segundo.');
+    alert(t('a.curto'));
     return;
   }
 
@@ -574,13 +577,13 @@ async function gerarLegenda() {
     await prepararEntrada();
 
     // Whisper quer áudio "cru": 16 kHz, mono, um número decimal por amostra
-    mostrarStatus('Extraindo o áudio do trecho…', 0);
+    mostrarStatus(t('s.extraindo'), 0);
     estado.ultimosLogs = [];
     const codigo = await ffmpeg.exec([
       '-ss', inicio.toFixed(3), '-i', estado.nomeEntrada, '-t', (fim - inicio).toFixed(3),
       '-vn', '-ac', '1', '-ar', '16000', '-f', 'f32le', '-c:a', 'pcm_f32le', 'audio.pcm',
     ]);
-    if (codigo !== 0) throw new Error('não consegui extrair o áudio (o vídeo tem som?)');
+    if (codigo !== 0) throw new Error(t('e.semAudio'));
     const bytes = await ffmpeg.readFile('audio.pcm');
     await ffmpeg.deleteFile('audio.pcm');
     const audio = new Float32Array(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength - (bytes.byteLength % 4)));
@@ -589,16 +592,16 @@ async function gerarLegenda() {
     const blocos = agruparEmBlocos(palavras);
     if (!blocos.length) {
       removerLegenda();
-      mostrarStatus('Não encontrei fala nesse trecho.', 0);
+      mostrarStatus(t('s.semFala'), 0);
       return;
     }
 
     estado.legenda = { blocos, inicioTrecho: inicio, fimTrecho: fim };
     desenharEditorLegenda();
-    mostrarStatus(`Legenda pronta: ${blocos.length} blocos. Revise o texto antes de exportar.`, 1);
+    mostrarStatus(t('s.legendaPronta', { n: blocos.length }), 1);
   } catch (erro) {
     console.error(erro);
-    mostrarStatus(`Erro na legenda: ${erro.message}`);
+    mostrarStatus(t('s.erroLegenda', { m: erro.message }));
   } finally {
     definirOcupado(estado.emLote); // no lote, continua ocupado até a fila acabar
   }
@@ -609,7 +612,7 @@ function removerLegenda(aviso = '') {
   el.editorLegenda.hidden = true;
   el.listaLegenda.replaceChildren();
   el.btnRemoverLegenda.hidden = true;
-  el.btnLegenda.textContent = 'Gerar legenda';
+  el.btnLegenda.textContent = t('legenda.gerar');
   el.legendaPrevia.hidden = true;
   atualizarDicaLegenda(aviso);
 }
@@ -617,7 +620,7 @@ function removerLegenda(aviso = '') {
 function atualizarDicaLegenda(aviso = '') {
   if (aviso) el.dicaLegenda.textContent = aviso;
   else if (estado.legenda && formatoAtual() === 'original') {
-    el.dicaLegenda.textContent = 'O formato Original não recodifica, então sai sem legenda.';
+    el.dicaLegenda.textContent = t('d.original');
   } else el.dicaLegenda.textContent = '';
 }
 
@@ -632,7 +635,7 @@ function desenharEditorLegenda() {
     const tempo = document.createElement('button');
     tempo.type = 'button';
     tempo.className = 'tempo';
-    tempo.title = 'Ir para este ponto do vídeo';
+    tempo.title = t('t.irPonto');
     tempo.textContent = formatarTempo(bloco.inicio);
     tempo.addEventListener('click', () => {
       el.video.currentTime = estado.legenda.inicioTrecho + bloco.inicio;
@@ -641,7 +644,7 @@ function desenharEditorLegenda() {
     const campo = document.createElement('input');
     campo.type = 'text';
     campo.value = textoDoBloco(bloco);
-    campo.setAttribute('aria-label', `Legenda em ${formatarTempo(bloco.inicio)}`);
+    campo.setAttribute('aria-label', t('t.legendaEm', { t: formatarTempo(bloco.inicio) }));
     campo.addEventListener('change', () => {
       aplicarTextoAoBloco(bloco, campo.value); // texto vazio = bloco some do vídeo
       atualizarPreviaLegenda();
@@ -652,7 +655,7 @@ function desenharEditorLegenda() {
   }
   el.editorLegenda.hidden = false;
   el.btnRemoverLegenda.hidden = false;
-  el.btnLegenda.textContent = 'Gerar de novo';
+  el.btnLegenda.textContent = t('legenda.denovo');
   atualizarDicaLegenda();
   atualizarPreviaLegenda();
 }
@@ -694,13 +697,13 @@ async function analisarMomentos() {
     // O áudio é extraído uma vez só; trocar duração/quantidade reaproveita
     if (!estado.audioAnalise) {
       await prepararEntrada();
-      mostrarStatus('Ouvindo o vídeo inteiro pra achar os melhores momentos…', 0);
+      mostrarStatus(t('s.ouvindoTudo'), 0);
       estado.duracaoExportando = el.video.duration;
       const codigo = await ffmpeg.exec([
         '-i', estado.nomeEntrada, '-vn', '-ac', '1', '-ar', String(TAXA_ANALISE),
         '-f', 's16le', '-c:a', 'pcm_s16le', 'analise.pcm',
       ]);
-      if (codigo !== 0) throw new Error('não consegui ler o áudio (o vídeo tem som?)');
+      if (codigo !== 0) throw new Error(t('e.semAudio'));
       const bytes = await ffmpeg.readFile('analise.pcm');
       await ffmpeg.deleteFile('analise.pcm');
       const fim = bytes.byteOffset + bytes.byteLength - (bytes.byteLength % 2);
@@ -718,14 +721,14 @@ async function analisarMomentos() {
     if (el.metodoMomentos.value === 'ia') {
       const chave = el.chaveGemini.value.trim();
       if (!chave) {
-        aviso = 'Cole sua chave do Gemini pra usar a IA. Por enquanto, sugeri pelo som.';
+        aviso = t('av.semChave');
       } else {
         try {
           momentos = await momentosPorIA(chave, opcoes);
-          if (!momentos.length) aviso = 'A IA não achou bons momentos. Sugeri pelo som.';
+          if (!momentos.length) aviso = t('av.iaNada');
         } catch (erro) {
           console.error(erro);
-          aviso = `A IA falhou (${erro.message}). Sugeri pelo som.`;
+          aviso = t('av.iaFalhou', { m: erro.message });
         }
       }
     }
@@ -737,13 +740,13 @@ async function analisarMomentos() {
 
     if (estado.momentos.length) {
       selecionarMomento(0);
-      mostrarStatus(aviso || `Encontrei ${estado.momentos.length} momentos. Confira e clique em Gerar clipes.`, 1);
+      mostrarStatus(aviso || t('s.encontrei', { n: estado.momentos.length }), 1);
     } else {
-      mostrarStatus('Não achei momentos que se destaquem pelo som. Marque os trechos na mão.', 0);
+      mostrarStatus(t('s.nada'), 0);
     }
   } catch (erro) {
     console.error(erro);
-    mostrarStatus(`Erro na análise: ${erro.message}`);
+    mostrarStatus(t('s.erroAnalise', { m: erro.message }));
   } finally {
     estado.duracaoExportando = 0;
     definirOcupado(false);
@@ -753,21 +756,21 @@ async function analisarMomentos() {
 /** Comprime o áudio, manda pro Gemini e dá acabamento nos tempos que ele devolver. */
 async function momentosPorIA(chave, opcoes) {
   if (!estado.audioIA) {
-    mostrarStatus('Preparando o áudio pra IA…', 0);
+    mostrarStatus(t('s.preparandoIA'), 0);
     estado.duracaoExportando = el.video.duration;
     // Voz em baixa qualidade: 1 hora de vídeo vira ~11 MB
     const codigo = await ffmpeg.exec([
       '-i', estado.nomeEntrada, '-vn', '-ac', '1', '-ar', '16000',
       '-c:a', 'aac', '-b:a', '24k', '-f', 'adts', 'ia.aac',
     ]);
-    if (codigo !== 0) throw new Error('não consegui comprimir o áudio');
+    if (codigo !== 0) throw new Error(t('e.comprimir'));
     const bytes = await ffmpeg.readFile('ia.aac');
     await ffmpeg.deleteFile('ia.aac');
-    if (bytes.byteLength > LIMITE_AUDIO_IA_BYTES) throw new Error('vídeo longo demais pra IA, o limite é perto de 1h15');
+    if (bytes.byteLength > LIMITE_AUDIO_IA_BYTES) throw new Error(t('e.longoIA'));
     estado.audioIA = await paraBase64(bytes);
   }
 
-  mostrarStatus('A IA está ouvindo o vídeo e escolhendo os momentos…', 0.5);
+  mostrarStatus(t('s.iaOuvindo'), 0.5);
   const momentos = await encontrarMomentosComIA({
     chave,
     audioBase64: estado.audioIA,
@@ -785,7 +788,7 @@ function paraBase64(bytes) {
   return new Promise((resolver, rejeitar) => {
     const leitor = new FileReader();
     leitor.onload = () => resolver(String(leitor.result).split(',')[1]);
-    leitor.onerror = () => rejeitar(new Error('não consegui preparar o áudio'));
+    leitor.onerror = () => rejeitar(new Error(t('e.prepararAudio')));
     leitor.readAsDataURL(new Blob([bytes]));
   });
 }
@@ -804,12 +807,14 @@ el.chaveGemini.addEventListener('change', () => {
     if (chave) localStorage.setItem(CHAVE_GUARDADA, chave);
     else localStorage.removeItem(CHAVE_GUARDADA);
   } catch { /* navegador sem localStorage: a chave vale só até fechar a aba */ }
-  if (chave) analisarMomentos();
 });
 el.metodoMomentos.addEventListener('change', () => {
   el.linhaChave.hidden = el.metodoMomentos.value !== 'ia';
-  analisarMomentos();
 });
+
+// O idioma falado aparece em dois lugares (painel de momentos e legenda): mantém os dois iguais
+el.idiomaMomentos.addEventListener('change', () => { el.idioma.value = el.idiomaMomentos.value; });
+el.idioma.addEventListener('change', () => { el.idiomaMomentos.value = el.idioma.value; });
 
 /** Abre um momento no editor: o trecho passa a ser o dele. */
 function selecionarMomento(indice) {
@@ -833,7 +838,7 @@ function desenharMomentos() {
     const marca = document.createElement('input');
     marca.type = 'checkbox';
     marca.checked = momento.marcado;
-    marca.setAttribute('aria-label', `Incluir o momento ${i + 1}`);
+    marca.setAttribute('aria-label', t('t.incluir', { n: i + 1 }));
     marca.addEventListener('change', () => {
       momento.marcado = marca.checked;
       atualizarBotaoLote();
@@ -842,7 +847,7 @@ function desenharMomentos() {
     const faixa = document.createElement('button');
     faixa.type = 'button';
     faixa.className = 'faixa';
-    faixa.title = 'Abrir este momento no editor';
+    faixa.title = t('t.abrirMomento');
     faixa.textContent = `${relogio(momento.inicio)} – ${relogio(momento.fim)}`;
     faixa.addEventListener('click', () => { if (!estado.ocupado) selecionarMomento(i); });
 
@@ -852,7 +857,7 @@ function desenharMomentos() {
 
     const forca = document.createElement('div');
     forca.className = 'forca';
-    forca.title = momento.titulo ? 'Nota que a IA deu pro momento' : 'Quanto o som se destaca do resto do vídeo';
+    forca.title = t(momento.titulo ? 't.notaIA' : 't.forcaSom');
     forca.innerHTML = '<div></div>';
     forca.firstChild.style.width = `${Math.round(momento.forca * 100)}%`;
 
@@ -869,8 +874,13 @@ function desenharMomentos() {
 
 function atualizarBotaoLote() {
   const marcados = estado.momentos.filter((m) => m.marcado).length;
-  el.btnLote.textContent = marcados ? `Gerar ${marcados} ${marcados === 1 ? 'clipe' : 'clipes'}` : 'Gerar clipes';
-  el.dicaMomentos.hidden = estado.momentos.length > 0;
+  const temMomentos = estado.momentos.length > 0;
+  el.btnLote.textContent = marcados === 1 ? t('mom.gerar1') : t('mom.gerarN', { n: marcados });
+  el.btnLote.hidden = !temMomentos;          // só aparece depois da busca
+  el.dicaMomentos.hidden = temMomentos;
+  // Antes da busca, "Encontrar momentos" é a ação principal; depois, vira secundária
+  el.btnAnalisar.textContent = t(temMomentos ? 'mom.denovo' : 'mom.encontrar');
+  el.btnAnalisar.classList.toggle('primario', !temMomentos);
 }
 
 /** Processa a fila: pra cada momento marcado, legenda (se pedido) e exporta. */
@@ -878,7 +888,7 @@ async function gerarLote() {
   if (estado.ocupado) return;
   const fila = estado.momentos.map((_, i) => i).filter((i) => estado.momentos[i].marcado);
   if (!fila.length) {
-    alert('Marque pelo menos um momento.');
+    alert(t('a.marque'));
     return;
   }
 
@@ -887,7 +897,7 @@ async function gerarLote() {
   let prontos = 0;
   try {
     for (const [posicao, indice] of fila.entries()) {
-      estado.prefixoStatus = `Clipe ${posicao + 1} de ${fila.length} — `;
+      estado.prefixoStatus = t('s.lote', { a: posicao + 1, b: fila.length });
       selecionarMomento(indice);
       if (el.legendarLote.checked && formatoAtual() !== 'original') await gerarLegenda();
       if (await exportar()) prontos += 1; // se um clipe falhar, a fila continua
@@ -897,12 +907,11 @@ async function gerarLote() {
     estado.prefixoStatus = '';
     definirOcupado(false);
   }
-  mostrarStatus(`${prontos} de ${fila.length} clipes prontos. Eles estão em "Clipes exportados".`, 1);
+  mostrarStatus(t('s.loteFim', { a: prontos, b: fila.length }), 1);
 }
 
 el.btnLote.addEventListener('click', gerarLote);
-el.duracaoClipe.addEventListener('change', analisarMomentos);
-el.quantidadeClipes.addEventListener('change', analisarMomentos);
+el.btnAnalisar.addEventListener('click', analisarMomentos); // a busca só roda com este clique
 
 // =====================================================================
 //  Lista de clipes exportados
@@ -922,10 +931,11 @@ function adicionarClipe(blob, { duracao, formato, ext }) {
     <video src="${url}" controls playsinline preload="metadata"></video>
     <div class="info">#${numero} · ${duracao.toFixed(1)}s · ${NOMES_FORMATO[formato]} · ${mb} MB</div>
     <div class="acoes">
-      <a class="baixar">Baixar</a>
-      <button type="button" class="remover" title="Remover">✕</button>
+      <a class="baixar" data-i18n="baixar"></a>
+      <button type="button" class="remover" data-i18n-title="remover">✕</button>
     </div>`;
 
+  aplicarTraducoes(li);
   const link = li.querySelector('a.baixar');
   link.href = url;
   link.download = nomeArquivo; // atribuído via JS pra não quebrar com nomes estranhos
@@ -939,3 +949,26 @@ function adicionarClipe(blob, { duracao, formato, ext }) {
   el.listaClipes.prepend(li); // mais recente primeiro
   el.etapaClipes.hidden = false;
 }
+
+// =====================================================================
+//  Idioma da interface (botões PT / EN / ES no canto superior direito)
+// =====================================================================
+
+/** Refaz os textos que são montados pelo JavaScript (os do HTML o i18n.js já troca). */
+function atualizarTextosDinamicos() {
+  sincronizarTempos();                       // "Duração: 9.0s"
+  desenharMomentos();                        // lista de momentos e botões do painel
+  definirOcupado(estado.ocupado);            // "Exportar clipe" / "Aguarde…"
+  el.btnLegenda.textContent = t(estado.legenda ? 'legenda.denovo' : 'legenda.gerar');
+  atualizarDicaLegenda();
+}
+
+document.querySelectorAll('input[name="interface"]').forEach((opcao) => {
+  opcao.checked = opcao.value === idiomaAtual();
+  opcao.addEventListener('change', () => definirIdioma(opcao.value));
+});
+aoTrocarIdioma(atualizarTextosDinamicos);
+
+// Primeira pintura da tela no idioma certo
+aplicarTraducoes();
+atualizarTextosDinamicos();

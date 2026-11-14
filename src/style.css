@@ -53,7 +53,9 @@ body {
 }
 
 /* ===== Topo ===== */
-.topo { text-align: center; padding: 40px 16px 12px; }
+.topo { position: relative; text-align: center; padding: 40px 16px 12px; }
+.troca-idioma { position: absolute; top: 14px; right: 16px; }
+.troca-idioma span { height: 22px; padding: 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
 .topo h1 {
   margin: 0;
   font-size: 28px;

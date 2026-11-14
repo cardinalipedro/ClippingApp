@@ -4,11 +4,13 @@ Editor de clipes verticais (TikTok, Shorts, Reels) que roda **100% no navegador*
 O vídeo nunca sai do computador do usuário: o processamento é feito pelo
 [FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm), uma versão do FFmpeg compilada para WebAssembly.
 
-## Funcionalidades (v0.5)
+## Funcionalidades (v0.6)
 
 - **Dois modos de entrada:**
   - *Clipe curto*: o vídeo abre já com a legenda sendo gerada
   - *Vídeo longo*: o app sugere os melhores momentos e gera todos os clipes em fila, já legendados. A escolha pode ser **por IA** (o Gemini ouve o áudio e escolhe pelo conteúdo, com título pra cada clipe) ou **pelo som** (trechos mais agitados, sem internet)
+- **Interface em português, inglês e espanhol** (botões PT / EN / ES no canto superior direito; a escolha fica salva)
+- No modo vídeo longo, a busca por momentos só começa quando você clica em **Encontrar momentos**
 - Vídeos longos são lidos direto do disco (WORKERFS), sem copiar o arquivo pra memória
 - Marcação de início e fim (botões ou atalhos **I** / **O**, prévia com **P**)
 - 3 formatos de saída:
