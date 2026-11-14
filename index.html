@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clipador — cortes verticais no navegador</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header class="topo">
+      <h1>Clipador<span>.</span></h1>
+      <p>Corte, enquadre em 9:16 e baixe. Tudo roda no seu navegador — nada é enviado pra servidor.</p>
+    </header>
+
+    <main>
+      <!-- ETAPA 1: escolher o vídeo -->
+      <section id="etapaUpload" class="card">
+        <label for="arquivo" class="dropzone" id="dropzone">
+          <strong>Arraste um vídeo aqui</strong>
+          <span>ou clique para escolher (mp4, mov, mkv, webm)</span>
+          <input type="file" id="arquivo" accept="video/*,.mkv,.mov" hidden />
+        </label>
+      </section>
+
+      <!-- ETAPA 2: editar -->
+      <section id="etapaEditor" class="card" hidden>
+        <div class="palco">
+          <div class="video-wrap" id="videoWrap">
+            <video id="video" controls playsinline></video>
+            <!-- Retângulo que mostra o que vai aparecer no clipe vertical -->
+            <div class="moldura" id="moldura" hidden></div>
+            <!-- Prévia da legenda por cima do player -->
+            <div class="legenda-previa" id="legendaPrevia" hidden></div>
+          </div>
+        </div>
+
+        <div class="controles">
+          <div class="grupo">
+            <span class="rotulo">Trecho</span>
+            <div class="conteudo">
+              <div class="campo">
+                <label for="inicio">Início</label>
+                <input type="number" id="inicio" step="0.1" min="0" value="0" />
+                <span class="unidade">s</span>
+                <button id="btnInicio" type="button" title="Usar o ponto atual do vídeo como início">Marcar <kbd>I</kbd></button>
+              </div>
+              <div class="campo">
+                <label for="fim">Fim</label>
+                <input type="number" id="fim" step="0.1" min="0" value="0" />
+                <span class="unidade">s</span>
+                <button id="btnFim" type="button" title="Usar o ponto atual do vídeo como fim">Marcar <kbd>O</kbd></button>
+              </div>
+              <span id="duracao" class="pill">Duração: 0.0s</span>
+              <button id="btnOuvir" class="secundario empurra" type="button">
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" /></svg>
+                Ver trecho <kbd>P</kbd>
+              </button>
+            </div>
+          </div>
+
+          <div class="grupo">
+            <span class="rotulo" id="rotuloFormato">Formato</span>
+            <div class="conteudo">
+              <div class="segmentado" role="radiogroup" aria-labelledby="rotuloFormato">
+                <label><input type="radio" name="formato" value="vertical" checked /><span>Vertical 9:16</span></label>
+                <label><input type="radio" name="formato" value="desfocado" /><span>Fundo desfocado</span></label>
+                <label><input type="radio" name="formato" value="original" /><span>Original</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="grupo" id="linhaPosicao">
+            <label class="rotulo" for="posicao">Enquadramento</label>
+            <div class="conteudo">
+              <span class="extremo">Esq.</span>
+              <input type="range" id="posicao" min="0" max="100" value="50" />
+              <span class="extremo">Dir.</span>
+            </div>
+          </div>
+
+          <div class="grupo" id="linhaResolucao">
+            <label class="rotulo" for="resolucao">Resolução</label>
+            <div class="conteudo">
+              <select id="resolucao">
+                <option value="1080">1080 × 1920</option>
+                <option value="720">720 × 1280 (exporta mais rápido)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grupo">
+            <label class="rotulo" for="idioma">Legenda</label>
+            <div class="conteudo">
+              <select id="idioma" title="Idioma falado no vídeo">
+                <option value="portuguese">Português</option>
+                <option value="english">English</option>
+                <option value="spanish">Español</option>
+              </select>
+              <button id="btnLegenda" type="button">Gerar legenda</button>
+              <button id="btnRemoverLegenda" class="secundario" type="button" hidden>Remover</button>
+              <span class="dica" id="dicaLegenda"></span>
+            </div>
+          </div>
+
+          <div class="editor-legenda" id="editorLegenda" hidden>
+            <ol id="listaLegenda"></ol>
+          </div>
+
+          <div class="acoes-finais">
+            <button id="btnExportar" class="primario" type="button">Exportar clipe</button>
+            <button id="btnTrocar" class="secundario" type="button">Trocar vídeo</button>
+          </div>
+
+          <div class="progresso" id="progresso" hidden>
+            <div class="barra"><div id="barra"></div></div>
+            <span id="status">Preparando…</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ETAPA 3: resultados -->
+      <section id="etapaClipes" class="card" hidden>
+        <h2>Clipes exportados</h2>
+        <ul id="listaClipes" class="clipes"></ul>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

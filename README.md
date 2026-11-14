@@ -1,0 +1,59 @@
+# Clipador ✂️
+
+Editor de clipes verticais (TikTok, Shorts, Reels) que roda **100% no navegador**.
+O vídeo nunca sai do computador do usuário: o processamento é feito pelo
+[FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm), uma versão do FFmpeg compilada para WebAssembly.
+
+## Funcionalidades (v0.2)
+
+- Upload por arrastar e soltar ou por clique
+- Marcação de início e fim (botões ou atalhos **I** / **O**, prévia com **P**)
+- 3 formatos de saída:
+  - **Vertical 9:16**: recorte com posição ajustável e prévia do enquadramento
+  - **Vertical com fundo desfocado**: o vídeo inteiro centralizado sobre uma versão borrada dele
+  - **Original**: corte instantâneo, sem recodificar
+- Saída em 1080×1920 ou 720×1280 (H.264 + AAC, `faststart`)
+- **Legenda automática** em português, inglês ou espanhol (no idioma falado), com destaque palavra por palavra e texto editável antes de exportar. A fala é reconhecida pelo [Whisper](https://github.com/openai/whisper) rodando no navegador via [Transformers.js](https://huggingface.co/docs/transformers.js)
+- Lista de clipes exportados com prévia e download
+
+## Como rodar
+
+Pré-requisito: [Node.js](https://nodejs.org) 18 ou mais novo.
+
+```bash
+npm install
+npm run dev
+```
+
+Abra o endereço que aparecer no terminal (normalmente http://localhost:5173).
+
+## Como funciona
+
+1. O vídeo escolhido é exibido num `<video>` através de uma URL temporária (`URL.createObjectURL`).
+2. Na primeira exportação o app baixa o núcleo do FFmpeg (~30 MB) e o inicializa num Web Worker.
+3. O arquivo é copiado para o sistema de arquivos virtual do FFmpeg (uma vez só por vídeo).
+4. `montarArgumentos()` (em `src/main.js`) monta o comando do FFmpeg conforme o formato.
+5. O resultado vira um `Blob`, que é exibido e baixado pelo navegador.
+
+## Limitações conhecidas
+
+- A legenda baixa um modelo de IA na primeira vez (dezenas de MB) e pode errar nomes próprios e gírias: sempre revise.
+- O formato "Original" não recodifica o vídeo, então sai sem legenda.
+- Vídeos muito grandes (> ~1,5 GB) podem estourar a memória do navegador.
+- Recodificar é mais lento que num programa nativo (o FFmpeg.wasm usa uma thread só).
+- O formato "Original" corta no keyframe mais próximo, então pode variar 1 a 2 s.
+
+## Roadmap
+
+- [x] Legenda automática (pt, en, es)
+- [ ] Estilos de legenda (cor, posição, tamanho)
+- [ ] Layout dividido (momento em cima, zoom ou reação embaixo)
+- [ ] Fila para exportar vários trechos de uma vez
+- [ ] Detecção automática de momentos pelos picos de áudio
+- [ ] Backend opcional para processar no servidor
+
+## Deploy
+
+`npm run build` gera a pasta `dist/`. A forma mais simples de publicar é importar o
+repositório na [Vercel](https://vercel.com) ou na [Netlify](https://netlify.com):
+elas detectam o Vite sozinhas.
