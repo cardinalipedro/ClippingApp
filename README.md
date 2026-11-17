@@ -1,72 +1,98 @@
 # Los Angeles Clippers ✂️
 
-Editor de clipes verticais (TikTok, Shorts, Reels) que roda **100% no navegador**.
-O vídeo nunca sai do computador do usuário: o processamento é feito pelo
-[FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm), uma versão do FFmpeg compilada para WebAssembly.
+🇧🇷 Português · [🇺🇸 English](README.en.md)
 
-## Funcionalidades (v0.8)
+**Editor de clipes verticais (TikTok, Shorts, Reels) que roda inteiro no navegador.**
+Corta, enquadra em 9:16, legenda automaticamente e, em vídeos longos, encontra os melhores momentos sozinho.
+O vídeo nunca sai do computador do usuário.
 
-- **Dois modos de entrada:**
-  - *Clipe curto*: o vídeo abre já com a legenda sendo gerada
-  - *Vídeo longo*: o app sugere os melhores momentos e gera todos os clipes em fila, já legendados. A escolha pode ser **por IA** (o Gemini ouve o áudio e escolhe pelo conteúdo, com título pra cada clipe) ou **pelo som** (trechos mais agitados, sem internet)
-- **Interface em português, inglês e espanhol** (botões PT / EN / ES no canto superior direito; a escolha fica salva)
-- **Tema escuro e claro** (botão ao lado dos idiomas): escuro em rosa e laranja, claro em bege com azul ciano. A escolha fica salva
-- No modo vídeo longo, a busca por momentos só começa quando você clica em **Encontrar momentos**
-- Vídeos longos são lidos direto do disco (WORKERFS), sem copiar o arquivo pra memória
-- Marcação de início e fim (botões ou atalhos **I** / **O**, prévia com **P**)
-- 3 formatos de saída:
-  - **Vertical 9:16**: recorte com posição ajustável e prévia do enquadramento
-  - **Vertical com fundo desfocado**: o vídeo inteiro centralizado sobre uma versão borrada dele
-  - **Original**: corte instantâneo, sem recodificar
-- Saída em 1080×1920 ou 720×1280 (H.264 + AAC, `faststart`)
-- **Legenda automática** em português, inglês ou espanhol (no idioma falado), com destaque palavra por palavra e texto editável antes de exportar. A fala é reconhecida pelo [Whisper](https://github.com/openai/whisper) (versão *small*, para mais precisão) rodando no navegador via [Transformers.js](https://huggingface.co/docs/transformers.js)
-- Lista de clipes exportados com prévia e download
+🔗 **Demo:** [clippersapp.vercel.app](https://clippersapp.vercel.app/)
 
-## Como rodar
+![Tela do editor com momentos encontrados pela IA](docs/editor.png)
 
-Pré-requisito: [Node.js](https://nodejs.org) 18 ou mais novo.
+---
+
+## Por que eu fiz
+
+Com o lançamento do GTA 6, quis cortar gameplay e lives em clipes curtos sem pagar ferramenta de terceiros nem subir vídeos de gigabytes para um servidor.
+O desafio que me propus: fazer **tudo no navegador**, ou seja, edição de vídeo, reconhecimento de fala e legenda queimada, sem backend.
+
+## O que ele faz
+
+| | |
+|---|---|
+| **Clipe curto** | Abre o vídeo e já gera a legenda automática no idioma falado (português, inglês ou espanhol). |
+| **Vídeo longo** | Encontra os momentos mais fortes, por IA (Gemini, que ouve o áudio e sugere título) ou pelo volume do som (offline). Depois corta e legenda tudo em fila. |
+| **3 formatos** | Vertical 9:16 com enquadramento ajustável, vertical com fundo desfocado, ou corte original sem recodificar. |
+| **Legenda editável** | Destaque palavra por palavra, com texto e tempos que dá para corrigir antes de exportar. |
+| **Interface** | PT / EN / ES, tema escuro e claro, layout responsivo, atalhos de teclado (I, O, P). |
+
+<p>
+  <img src="docs/inicio.png" alt="Tela inicial, tema escuro" width="49%" />
+  <img src="docs/tema-claro.png" alt="Tela inicial, tema claro" width="49%" />
+</p>
+<p align="center"><img src="docs/celular.png" alt="Versão para celular" width="260" /></p>
+
+## Stack
+
+- **JavaScript (ES Modules), HTML e CSS puros**, sem framework, para entender cada peça
+- **[Vite](https://vitejs.dev)** para desenvolvimento e build
+- **[FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm)**: FFmpeg compilado para WebAssembly (corte, crop, blur, legenda ASS queimada)
+- **[Transformers.js](https://huggingface.co/docs/transformers.js) + Whisper small**: reconhecimento de fala com timestamp por palavra, rodando num Web Worker
+- **[Gemini API](https://ai.google.dev)**: escolha de momentos pelo conteúdo, com resposta em JSON estruturado (`responseSchema`)
+- **Web Audio API**: análise de volume para o modo offline
+- **Vercel** para deploy contínuo a cada push
+
+## Desafios técnicos que resolvi
+
+- **Vídeos de mais de 1 GB no navegador.** Copiar o arquivo inteiro para a memória do FFmpeg travava a aba. Passei a montar o arquivo com `WORKERFS`, que lê direto do disco, e deixei a cópia em memória só como plano B.
+- **Legenda errando muito.** O Whisper *base* quantizado (`q8`) errava até em áudio limpo. Troquei para o *small* em `fp32`. Fica mais lento, mas a precisão melhorou bastante, e preferi qualidade à velocidade.
+- **IA instável.** A API do Gemini às vezes responde 503 (alta demanda). Fiz a descoberta dinâmica dos modelos Flash disponíveis, com nova tentativa no mesmo modelo para 503 e troca de modelo para 403/404/429. Além disso, a resposta é validada: tempos fora do vídeo e clipes sobrepostos são descartados.
+- **Detector de momentos sem IA.** Ele mede o volume (RMS em dB) a cada 0,25 s, pontua os picos acima da mediana, escolhe janelas sem sobreposição e ajusta início e fim para o silêncio mais próximo, para o clipe não começar no meio de uma palavra.
+- **Legenda igual na prévia e no vídeo final.** Gero um arquivo ASS com a fonte Inter embutida no FFmpeg, para o texto queimado ficar idêntico ao que aparece no editor.
+- **Tema sem "piscar".** Um script inline no `<head>` aplica o tema salvo antes da primeira pintura. As cores são todas variáveis CSS, então um tema é só um bloco de tokens.
+- **i18n sem biblioteca.** Uso atributos `data-i18n` e um dicionário por idioma, com checagem automática de chaves faltando entre os três idiomas.
+
+## Arquitetura
+
+```
+index.html                 estrutura das 3 etapas (upload → editor → clipes)
+src/
+├── main.js                estado, eventos e montagem dos comandos do FFmpeg
+├── transcricao.worker.js  Whisper rodando fora da thread principal
+├── legenda.js             agrupa palavras em blocos e gera o arquivo .ass
+├── momentos.js            detector de momentos pelo volume do áudio
+├── ia.js                  integração com o Gemini (prompt, schema, retry, validação)
+├── i18n.js                textos em pt, en e es
+└── style.css              tokens dos temas + componentes
+```
+
+## Rodando localmente
+
+Pré-requisito: [Node.js](https://nodejs.org) 18+.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abra o endereço que aparecer no terminal (normalmente http://localhost:5173).
-
-## Chave do Gemini (opcional)
-
-O modo por IA usa a API do Gemini com uma chave sua, criada no [Google AI Studio](https://aistudio.google.com/apikey).
-A chave fica salva só no `localStorage` do seu navegador: ela não faz parte do código e não vai pro repositório.
-O áudio do vídeo é enviado ao Google pra análise.
-
-## Como funciona
-
-1. O vídeo escolhido é exibido num `<video>` através de uma URL temporária (`URL.createObjectURL`).
-2. Na primeira exportação o app baixa o núcleo do FFmpeg (~30 MB) e o inicializa num Web Worker.
-3. O arquivo é copiado para o sistema de arquivos virtual do FFmpeg (uma vez só por vídeo).
-4. `montarArgumentos()` (em `src/main.js`) monta o comando do FFmpeg conforme o formato.
-5. O resultado vira um `Blob`, que é exibido e baixado pelo navegador.
+**Chave do Gemini (opcional):** para usar o modo por IA, crie uma chave grátis no [Google AI Studio](https://aistudio.google.com/apikey) e cole no app.
+Ela fica só no `localStorage` do seu navegador, nunca no código. Nesse modo, o áudio do vídeo é enviado ao Google para análise.
 
 ## Limitações conhecidas
 
-- A legenda baixa um modelo de IA na primeira vez (dezenas de MB) e pode errar nomes próprios e gírias: sempre revise.
-- O formato "Original" não recodifica o vídeo, então sai sem legenda.
-- A detecção de momentos olha só o volume do som: acha gritos, risadas e explosões, mas não entende o que foi dito.
-- Recodificar é mais lento que num programa nativo (o FFmpeg.wasm usa uma thread só).
-- O formato "Original" corta no keyframe mais próximo, então pode variar 1 a 2 s.
+- Na primeira vez, o FFmpeg (~30 MB) e o modelo do Whisper são baixados. Depois ficam em cache.
+- O FFmpeg.wasm usa uma thread só, então exportar é mais lento que num programa nativo.
+- O detector pelo som acha gritos e explosões, mas não entende o que foi dito (para isso existe o modo IA).
+- O formato "Original" corta no keyframe mais próximo e sai sem legenda.
 
-## Roadmap
+## Próximos passos
 
-- [x] Legenda automática (pt, en, es)
 - [ ] Estilos de legenda (cor, posição, tamanho)
-- [ ] Layout dividido (momento em cima, zoom ou reação embaixo)
-- [x] Detecção de momentos pelos picos de áudio + exportação em fila
-- [x] IA (Gemini) escolhendo momentos e sugerindo títulos, com a chave do próprio usuário
-- [ ] Backend pra esconder a chave e abrir o site ao público
-- [ ] Backend opcional para processar no servidor
+- [ ] Layout dividido (gameplay em cima, reação embaixo)
+- [ ] Entrada por link, com um servidor local usando yt-dlp
+- [ ] Backend serverless para esconder a chave e abrir o modo IA ao público
 
-## Deploy
+---
 
-`npm run build` gera a pasta `dist/`. A forma mais simples de publicar é importar o
-repositório na [Vercel](https://vercel.com) ou na [Netlify](https://netlify.com):
-elas detectam o Vite sozinhas.
+Feito por **Pedro Cardinali** · [GitHub](https://github.com/cardinalipedro)
