@@ -40,6 +40,7 @@
   --seta: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%239a94aa' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
 
   /* forma */
+  --largura: 1200px;       /* largura máxima do conteúdo (cards e topo). Aumente ou diminua aqui */
   --raio: 8px;
   --raio-card: 12px;
   --altura: 32px;          /* altura padrão de botões e campos */
@@ -93,8 +94,10 @@ body {
 }
 
 /* ===== Topo ===== */
-.topo { position: relative; text-align: center; padding: 40px 16px 12px; }
-.topo-acoes { position: absolute; top: 14px; right: 16px; display: flex; align-items: center; gap: 8px; }
+.topo { text-align: center; padding: 14px 16px 12px; }
+/* mesma largura do main: os botões de idioma e tema ficam alinhados com a borda direita dos cards */
+.topo-interno { position: relative; max-width: var(--largura); margin: 0 auto; padding-top: 26px; }
+.topo-acoes { position: absolute; top: 0; right: 0; display: flex; align-items: center; gap: 8px; }
 .troca-tema { width: 28px; height: 28px; padding: 0; color: var(--suave); background: var(--campo); }
 .troca-tema:hover { color: var(--texto); }
 /* Mostra a lua no tema escuro e o sol no claro (o ícone indica o tema atual) */
@@ -115,11 +118,13 @@ body, .card, .campo, .segmentado, .momentos { transition: background-color .2s, 
   color: transparent;
   display: inline-block;
 }
+.topo h1 a { color: inherit; text-decoration: none; }
+.topo h1 a:focus-visible { outline: 2px solid var(--foco); outline-offset: 4px; border-radius: 4px; }
 .topo h1 span { color: var(--acento-2); }
 .topo p { color: var(--suave); margin: 6px 0 0; font-size: 14px; }
 
 main {
-  max-width: 920px;
+  max-width: calc(var(--largura) + 32px);   /* + o padding dos dois lados */
   margin: 0 auto;
   padding: 16px;
   display: grid;
@@ -138,6 +143,11 @@ main {
   font-weight: 600;
   color: var(--suave);
 }
+
+/* ===== Voltar (topo do editor) ===== */
+.barra-voltar { display: flex; align-items: center; gap: 10px; margin: -4px 0 12px; }
+.barra-voltar button { padding: 0 10px 0 6px; }
+.modo-atual { color: var(--fraco); font-size: 12px; }
 
 /* ===== Upload ===== */
 .dropzone {
@@ -159,7 +169,7 @@ main {
 }
 
 .modos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.modos .dropzone { padding: 44px 16px; text-align: center; }
+.modos .dropzone { padding: 44px 24px; text-align: center; min-height: 200px; justify-content: center; }
 .dropzone .formatos { color: var(--fraco); font-size: 12px; margin-top: 8px; }
 .grupo.sem-linha { border-bottom: 0; padding-bottom: 0; }
 @media (max-width: 640px) { .modos { grid-template-columns: 1fr; } }
@@ -558,29 +568,32 @@ select option { background: var(--card); color: var(--texto); }
    Telas largas: layout de sempre. Tablet (até 900px) e celular (até 640px) ajustam espaços e quebras. */
 
 /* Evita que um filho com largura fixa empurre o layout pra fora da tela */
-main, .card, .conteudo > *, .momentos, .editor-legenda { min-width: 0; max-width: 100%; }
+.card, .conteudo > *, .momentos, .editor-legenda { min-width: 0; max-width: 100%; }
 .segmentado { flex-wrap: wrap; }
 .linha-chave input { min-width: 0; }
 input[type="range"] { width: 100%; }
 
 @media (max-width: 900px) {
   main { padding: 12px; }
+  .topo { padding-left: 12px; padding-right: 12px; }
 }
 
 @media (max-width: 640px) {
   /* topo: abre espaço pros botões de idioma e tema, que ficam absolutos no canto */
-  .topo { padding: 56px 12px 12px; }
+  .topo { padding: 10px 12px 12px; }
+  .topo-interno { padding-top: 46px; }
   .topo h1 { font-size: 24px; }
   .topo p { font-size: 13px; }
-  .topo-acoes { top: 10px; right: 10px; }
+  .topo-acoes { top: 0; right: 0; }
 
   main { padding: 10px; gap: 10px; }
+  .topo { padding-left: 10px; padding-right: 10px; }
   .card { padding: 12px; }
   .card h2 { margin-bottom: 10px; }
 
   /* upload: cartões de vídeo menores pra caber mais na tela */
   .dropzone { padding: 32px 12px; }
-  .modos .dropzone { padding: 24px 12px; }
+  .modos .dropzone { padding: 24px 12px; min-height: 0; }
 
   /* player: menos altura pra sobrar espaço pros controles */
   .video-wrap video { max-height: 50vh; }

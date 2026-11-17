@@ -12,7 +12,7 @@
 
 const TEXTOS = {
   pt: {
-    'pagina.titulo': 'Clipador — cortes verticais no navegador',
+    'pagina.titulo': 'Los Angeles Clippers — cortes verticais no navegador',
     'header.sub': 'Corte, enquadre em 9:16 e baixe. Tudo roda no seu navegador — nada é enviado pra servidor.',
     'modo.curto.titulo': 'Clipe curto',
     'modo.curto.desc': 'Já tem o trecho pronto? A legenda é gerada sozinha.',
@@ -65,6 +65,8 @@ const TEXTOS = {
     'exportar': 'Exportar clipe',
     'aguarde': 'Aguarde…',
     'trocar': 'Trocar vídeo',
+    'voltar': 'Voltar',
+    'voltar.inicio': 'Voltar ao início',
     'clipes.titulo': 'Clipes exportados',
     'baixar': 'Baixar',
     'remover': 'Remover',
@@ -129,7 +131,7 @@ const TEXTOS = {
   },
 
   en: {
-    'pagina.titulo': 'Clipador — vertical clips in your browser',
+    'pagina.titulo': 'Los Angeles Clippers — vertical clips in your browser',
     'header.sub': 'Cut, frame in 9:16 and download. Everything runs in your browser — nothing is uploaded to a server.',
     'modo.curto.titulo': 'Short clip',
     'modo.curto.desc': 'Already have the clip? Captions are generated automatically.',
@@ -182,6 +184,8 @@ const TEXTOS = {
     'exportar': 'Export clip',
     'aguarde': 'Please wait…',
     'trocar': 'Change video',
+    'voltar': 'Back',
+    'voltar.inicio': 'Back to start',
     'clipes.titulo': 'Exported clips',
     'baixar': 'Download',
     'remover': 'Remove',
@@ -246,7 +250,7 @@ const TEXTOS = {
   },
 
   es: {
-    'pagina.titulo': 'Clipador — clips verticales en el navegador',
+    'pagina.titulo': 'Los Angeles Clippers — clips verticales en el navegador',
     'header.sub': 'Corta, encuadra en 9:16 y descarga. Todo funciona en tu navegador — nada se envía a un servidor.',
     'modo.curto.titulo': 'Clip corto',
     'modo.curto.desc': '¿Ya tienes el fragmento listo? Los subtítulos se generan solos.',
@@ -299,6 +303,8 @@ const TEXTOS = {
     'exportar': 'Exportar clip',
     'aguarde': 'Espera…',
     'trocar': 'Cambiar video',
+    'voltar': 'Volver',
+    'voltar.inicio': 'Volver al inicio',
     'clipes.titulo': 'Clips exportados',
     'baixar': 'Descargar',
     'remover': 'Quitar',

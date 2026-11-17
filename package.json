@@ -1,7 +1,7 @@
 {
-  "name": "clipador",
+  "name": "los-angeles-clippers",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "type": "module",
   "description": "Editor de clipes verticais que roda 100% no navegador (FFmpeg.wasm)",
   "scripts": {

@@ -164,6 +164,7 @@ function abrirArquivo(arquivo, modo) {
   if (estado.urlVideo) URL.revokeObjectURL(estado.urlVideo); // libera o vídeo anterior
   estado.arquivo = arquivo;
   estado.modo = modo;
+  atualizarModoAtual();
   removerLegenda(); // legenda e momentos do vídeo anterior não valem pro novo
   estado.audioAnalise = null;
   estado.audioIA = null;
@@ -200,10 +201,27 @@ el.video.addEventListener('error', () => {
   alert(t('a.naoAbre'));
 });
 
-el.btnTrocar.addEventListener('click', () => {
+// Volta pra tela inicial. Usado pelo "Trocar vídeo", pelo "Voltar" e pelo clique no logo.
+// Se estiver exportando ou analisando, não deixa sair no meio (o botão Trocar fica desativado nesse caso).
+function voltarAoInicio() {
+  if (el.btnTrocar.disabled) return;
   el.video.pause();
   mostrarEtapa('upload');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+el.btnTrocar.addEventListener('click', voltarAoInicio);
+document.getElementById('btnVoltar').addEventListener('click', voltarAoInicio);
+document.getElementById('logo').addEventListener('click', (e) => {
+  e.preventDefault();   // não recarrega a página: assim o FFmpeg já carregado continua na memória
+  voltarAoInicio();
 });
+
+// Mostra ao lado do "Voltar" em qual modo a pessoa está
+function atualizarModoAtual() {
+  document.getElementById('modoAtual').textContent =
+    t(estado.modo === 'longo' ? 'modo.longo.titulo' : 'modo.curto.titulo');
+}
 
 function mostrarEtapa(qual) {
   el.etapaUpload.hidden = qual !== 'upload';
@@ -508,6 +526,7 @@ function definirOcupado(ocupado) {
   estado.ocupado = ocupado;
   el.btnExportar.disabled = ocupado;
   el.btnTrocar.disabled = ocupado;
+  document.getElementById('btnVoltar').disabled = ocupado;
   el.btnLegenda.disabled = ocupado;
   el.btnLote.disabled = ocupado;
   el.duracaoClipe.disabled = ocupado;
@@ -957,6 +976,7 @@ function adicionarClipe(blob, { duracao, formato, ext }) {
 
 /** Refaz os textos que são montados pelo JavaScript (os do HTML o i18n.js já troca). */
 function atualizarTextosDinamicos() {
+  atualizarModoAtual();                      // "Clipe curto" / "Vídeo longo" ao lado do Voltar
   sincronizarTempos();                       // "Duração: 9.0s"
   desenharMomentos();                        // lista de momentos e botões do painel
   definirOcupado(estado.ocupado);            // "Exportar clipe" / "Aguarde…"

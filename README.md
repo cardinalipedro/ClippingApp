@@ -1,10 +1,10 @@
-# Clipador ✂️
+# Los Angeles Clippers ✂️
 
 Editor de clipes verticais (TikTok, Shorts, Reels) que roda **100% no navegador**.
 O vídeo nunca sai do computador do usuário: o processamento é feito pelo
 [FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm), uma versão do FFmpeg compilada para WebAssembly.
 
-## Funcionalidades (v0.7)
+## Funcionalidades (v0.8)
 
 - **Dois modos de entrada:**
   - *Clipe curto*: o vídeo abre já com a legenda sendo gerada
