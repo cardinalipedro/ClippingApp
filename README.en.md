@@ -41,6 +41,7 @@ The challenge I set for myself: do **everything in the browser**, meaning video 
 - **[Transformers.js](https://huggingface.co/docs/transformers.js) + Whisper small**: speech recognition with word-level timestamps, running in a Web Worker
 - **[Gemini API](https://ai.google.dev)**: content-aware moment picking, with structured JSON output (`responseSchema`)
 - **Web Audio API**: loudness analysis for the offline mode
+- **node:test** (built into Node, no dependency) for domain and use-case tests
 - **Vercel** for continuous deployment on every push
 
 ## Technical challenges I solved
@@ -55,17 +56,40 @@ The challenge I set for myself: do **everything in the browser**, meaning video 
 
 ## Architecture
 
+The code follows **Clean Architecture**: the app's rules sit at the center and do not depend on the browser, libraries or APIs. Each layer can only import the layers "inside" it:
+
 ```
-index.html                 markup for the 3 steps (upload → editor → clips)
+interface ──► aplicacao ──► dominio
+                 ▲
+infraestrutura ──┘   (implements the contracts in aplicacao/portas.js)
+```
+
+```
 src/
-├── main.js                state, events and FFmpeg command building
-├── transcricao.worker.js  Whisper running off the main thread
-├── legenda.js             groups words into caption blocks and writes the .ass file
-├── momentos.js            loudness-based moment detector
-├── ia.js                  Gemini integration (prompt, schema, retries, validation)
-├── i18n.js                strings in pt, en and es
-└── style.css              theme tokens + components
+├── dominio/          domain: pure rules, no browser, no libraries
+│   ├── trecho.js            clip range rules (start/end, limits, validation)
+│   ├── enquadramento.js     9:16 crop math
+│   ├── comandos-ffmpeg.js   builds FFmpeg commands (does not run them)
+│   ├── legenda.js           groups words into caption blocks, writes .ass
+│   ├── momentos.js          loudness-based moment detector
+│   └── momentos-ia.js       AI prompt and response validation
+├── aplicacao/        application: use cases orchestrating the domain
+│   ├── portas.js            ports (MotorVideo, Transcritor, BuscadorMomentosIA)
+│   ├── exportar-clipe.js
+│   ├── gerar-legenda.js
+│   ├── encontrar-momentos.js
+│   └── gerar-lote.js
+├── infraestrutura/   infrastructure: adapters to the outside world
+│   ├── motor-ffmpeg.js      FFmpeg.wasm
+│   ├── transcritor-whisper.js + transcricao.worker.js
+│   ├── gemini.js            Gemini API
+│   └── armazenamento.js     localStorage
+├── interface/        UI: reads the DOM, calls use cases, renders
+└── main.js           composition root: creates and wires everything
+tests/                domain, use cases (with fake adapters) and layer-rule tests
 ```
+
+In practice, use cases receive the video engine, the transcriber and the AI **as parameters** (dependency injection). That lets the tests swap FFmpeg and Gemini for fakes and run in Node in milliseconds. One test also checks that no layer imports something it shouldn't.
 
 The code is written in Portuguese (variable and file names), my native language.
 
@@ -75,7 +99,8 @@ Requires [Node.js](https://nodejs.org) 18+.
 
 ```bash
 npm install
-npm run dev
+npm run dev   # starts the app
+npm test      # runs the tests
 ```
 
 **Gemini key (optional):** to use the AI mode, create a free key at [Google AI Studio](https://aistudio.google.com/apikey) and paste it into the app.

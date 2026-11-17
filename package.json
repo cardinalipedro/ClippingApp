@@ -1,13 +1,14 @@
 {
   "name": "los-angeles-clippers",
   "private": true,
-  "version": "0.8.0",
+  "version": "0.9.0",
   "type": "module",
   "description": "Editor de clipes verticais que roda 100% no navegador (FFmpeg.wasm)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.10",

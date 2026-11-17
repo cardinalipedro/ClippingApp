@@ -1,0 +1,3 @@
+Inter ExtraBold — fonte usada nas legendas queimadas no vídeo.
+Autor: Rasmus Andersson (https://rsms.me/inter/)
+Licença: SIL Open Font License 1.1 (uso livre, inclusive comercial).

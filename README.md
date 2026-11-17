@@ -41,6 +41,7 @@ O desafio que me propus: fazer **tudo no navegador**, ou seja, edição de víde
 - **[Transformers.js](https://huggingface.co/docs/transformers.js) + Whisper small**: reconhecimento de fala com timestamp por palavra, rodando num Web Worker
 - **[Gemini API](https://ai.google.dev)**: escolha de momentos pelo conteúdo, com resposta em JSON estruturado (`responseSchema`)
 - **Web Audio API**: análise de volume para o modo offline
+- **node:test** (nativo do Node, sem dependência) para testes do domínio e dos casos de uso
 - **Vercel** para deploy contínuo a cada push
 
 ## Desafios técnicos que resolvi
@@ -55,17 +56,40 @@ O desafio que me propus: fazer **tudo no navegador**, ou seja, edição de víde
 
 ## Arquitetura
 
+O código segue **Clean Architecture**: as regras do app ficam no centro e não dependem de navegador, biblioteca ou API. Cada camada só pode importar as que estão "para dentro":
+
 ```
-index.html                 estrutura das 3 etapas (upload → editor → clipes)
+interface ──► aplicacao ──► dominio
+                 ▲
+infraestrutura ──┘   (cumpre os contratos de aplicacao/portas.js)
+```
+
+```
 src/
-├── main.js                estado, eventos e montagem dos comandos do FFmpeg
-├── transcricao.worker.js  Whisper rodando fora da thread principal
-├── legenda.js             agrupa palavras em blocos e gera o arquivo .ass
-├── momentos.js            detector de momentos pelo volume do áudio
-├── ia.js                  integração com o Gemini (prompt, schema, retry, validação)
-├── i18n.js                textos em pt, en e es
-└── style.css              tokens dos temas + componentes
+├── dominio/          regras puras, sem navegador nem bibliotecas
+│   ├── trecho.js            marcar início/fim, limites, validação
+│   ├── enquadramento.js     contas do recorte 9:16
+│   ├── comandos-ffmpeg.js   monta os comandos (não executa)
+│   ├── legenda.js           agrupa palavras em blocos e gera o .ass
+│   ├── momentos.js          detector de momentos pelo volume
+│   └── momentos-ia.js       pedido pra IA e validação da resposta
+├── aplicacao/        casos de uso: orquestram o domínio
+│   ├── portas.js            contratos (MotorVideo, Transcritor, BuscadorMomentosIA)
+│   ├── exportar-clipe.js
+│   ├── gerar-legenda.js
+│   ├── encontrar-momentos.js
+│   └── gerar-lote.js
+├── infraestrutura/   adaptadores pro mundo externo
+│   ├── motor-ffmpeg.js      FFmpeg.wasm
+│   ├── transcritor-whisper.js + transcricao.worker.js
+│   ├── gemini.js            API do Gemini
+│   └── armazenamento.js     localStorage
+├── interface/        telas: leem o DOM, chamam casos de uso, desenham
+└── main.js           raiz de composição: cria e conecta tudo
+tests/                domínio, casos de uso (com adaptadores falsos) e regra das camadas
 ```
+
+Na prática: os casos de uso recebem o motor de vídeo, o transcritor e a IA **por parâmetro** (injeção de dependência). Por isso os testes trocam o FFmpeg e o Gemini por objetos falsos e rodam no Node em milissegundos. Um teste também confere que nenhuma camada importa o que não deve.
 
 ## Rodando localmente
 
@@ -73,7 +97,8 @@ Pré-requisito: [Node.js](https://nodejs.org) 18+.
 
 ```bash
 npm install
-npm run dev
+npm run dev   # abre o app
+npm test      # roda os testes
 ```
 
 **Chave do Gemini (opcional):** para usar o modo por IA, crie uma chave grátis no [Google AI Studio](https://aistudio.google.com/apikey) e cole no app.
